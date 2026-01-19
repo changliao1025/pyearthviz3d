@@ -1,1 +1,1 @@
-# earthviz3d
+# pyearthviz3d

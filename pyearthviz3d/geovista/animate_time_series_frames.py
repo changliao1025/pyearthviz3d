@@ -1,5 +1,6 @@
-import os, sys
+import os
 import logging
+import math
 import numpy as np
 from typing import Optional, List, Tuple, Union, Dict, Any
 
@@ -11,6 +12,8 @@ from pyearthviz3d.geovista.utility import (
     setup_geovista_plotter,
     configure_camera,
     add_geographic_context,
+    DEFAULT_EARTH_RADIUS,
+    DEFAULT_CAMERA_DISTANCE_MULTIPLIER,
 )
 
 

@@ -6,7 +6,6 @@ validation, progress tracking, and enhanced user experience.
 """
 
 import os
-import sys
 import logging
 import traceback
 from typing import Optional, Dict, Any, List, Tuple, Callable, Union

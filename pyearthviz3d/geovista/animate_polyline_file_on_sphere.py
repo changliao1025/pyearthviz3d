@@ -1,21 +1,9 @@
 import os
 import logging
 import traceback
-import geovista
-import numpy as np
 import math
-
-import signal
-import sys
-import time
+import numpy as np
 from osgeo import gdal, ogr, osr
-from multiprocessing import Pool, cpu_count
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from pyearth.gis.location.get_geometry_coordinates import get_geometry_coordinates
-from pyearth.gis.geometry.extract_unique_vertices_and_connectivity import (
-    extract_unique_vertices_and_connectivity,
-)
-from pyearth.gis.gdal.gdal_vector_format_support import get_vector_driver_from_filename
 from geovista.geodesic import line as gv_line
 
 # Set up logger

@@ -15,15 +15,10 @@ Features:
 import os
 import sys
 import logging
-import traceback
 import math
-import subprocess
 from typing import Optional, List, Tuple, Union, Dict, Any, NamedTuple
 import numpy as np
-from osgeo import gdal, ogr
 from functools import lru_cache
-
-gdal.UseExceptions()
 
 # Set up logging
 logger = logging.getLogger(__name__)

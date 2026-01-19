@@ -6,7 +6,6 @@ error handling, validation, and enhanced user experience.
 """
 
 import os
-import sys
 import logging
 import traceback
 from typing import Optional, Dict, Any, Tuple, List, Union

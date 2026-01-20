@@ -17,7 +17,7 @@ from pyearthviz3d.geovista.utility import (
 )
 
 
-def animate_multiple_frames(
+def animate_time_series_frames(
     pPlotter,
     sFilename_out,
     dLongitude_start,

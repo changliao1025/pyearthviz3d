@@ -76,6 +76,7 @@ def map_single_frame(
     validate_inputs: bool = True,
     retry_on_failure: bool = True,
     return_detailed_result: bool = False,
+    base_layer: Optional[str] = "natural_earth_hypsometric",
 ) -> Union[bool, SingleFrameResult]:
     """
     Enhanced single frame visualization with comprehensive error handling and validation.
@@ -91,6 +92,11 @@ def map_single_frame(
         validate_inputs: Whether to validate inputs before processing
         retry_on_failure: Whether to attempt recovery strategies on failure
         return_detailed_result: Whether to return detailed result object
+        base_layer: Base layer texture to add to the globe. Options:
+            - "natural_earth_hypsometric" (default): Natural Earth hypsometric texture
+            - "natural_earth_1": Natural Earth I texture
+            - "blue_marble": NASA Blue Marble texture
+            - None: No base layer (empty globe)
 
     Returns:
         bool or SingleFrameResult: Success status (bool for backward compatibility) or detailed result object
@@ -108,12 +114,22 @@ def map_single_frame(
         ...     sUnit="°C",
         ...     sFilename_out="output.png"
         ... )
-        >>> # Advanced usage with detailed results
+        >>> # Advanced usage with detailed results and custom base layer
         >>> result = map_single_frame(
         ...     mesh, indices, config,
         ...     sScalar="temperature",
         ...     sUnit="°C",
         ...     sFilename_out="output.png",
+        ...     base_layer="blue_marble",
+        ...     return_detailed_result=True
+        ... )
+        >>> # Usage with no base layer (empty globe)
+        >>> result = map_single_frame(
+        ...     mesh, indices, config,
+        ...     sScalar="temperature",
+        ...     sUnit="°C",
+        ...     sFilename_out="output.png",
+        ...     base_layer=None,
         ...     return_detailed_result=True
         ... )
         >>> print(result.get_summary())
@@ -166,7 +182,33 @@ def map_single_frame(
             force_xvfb=pConfig.force_xvfb,
         )
 
-        plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
+        # Add base layer if specified
+        if base_layer is not None:
+            try:
+                if base_layer == "natural_earth_hypsometric":
+                    plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
+                elif base_layer == "natural_earth_1":
+                    plotter.add_base_layer(texture=gv.natural_earth_1())
+                elif base_layer == "blue_marble":
+                    plotter.add_base_layer(texture=gv.blue_marble())
+                else:
+                    # Try to use the base_layer string as a direct texture name
+                    texture_func = getattr(gv, base_layer, None)
+                    if texture_func and callable(texture_func):
+                        plotter.add_base_layer(texture=texture_func())
+                    else:
+                        logger.warning(f"Unknown base layer '{base_layer}', using natural_earth_hypsometric")
+                        plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
+
+                if pConfig.verbose:
+                    logger.info(f"🌍 Added base layer: {base_layer}")
+            except Exception as e:
+                logger.warning(f"Failed to add base layer '{base_layer}': {e}")
+                if pConfig.verbose:
+                    logger.info("Continuing without base layer...")
+        else:
+            if pConfig.verbose:
+                logger.info("🌍 No base layer specified - using empty globe")
 
         if plotter is None:
             error_msg = "Failed to create GeoVista plotter"

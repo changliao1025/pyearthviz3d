@@ -383,9 +383,9 @@ class ScalarBarConfig:
         if orientation == "vertical":
             # Default values for vertical scalar bar
             default_position_x = 0.9
-            default_position_y = 0.5
+            default_position_y = 0.2
             default_width = 0.05
-            default_height = 0.4
+            default_height = 0.6
         else:  # horizontal
             # Default values for horizontal scalar bar
             default_position_x = 0.5

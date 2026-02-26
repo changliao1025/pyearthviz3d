@@ -622,10 +622,10 @@ def animate_polyline_file_on_sphere(
             except Exception as e:
                 logger.warning(f"Could not add coastlines: {e}")
 
-        # Add coordinate axes
+        # Add coordinate axes with smaller viewport to avoid large labels
         try:
-            plotter.add_axes()
-            logger.debug("Added coordinate axes")
+            plotter.add_axes(viewport=(0.0, 0.0, 0.15, 0.15))
+            logger.debug("Added coordinate axes with reduced size")
         except Exception as e:
             logger.warning(f"Could not add axes: {e}")
 
@@ -840,7 +840,7 @@ def _create_rotation_animation(
                 plotter.camera.focal_point = focal_point
                 plotter.camera.position = camera_position
                 # plotter.camera.zoom(1.0) #apply zoom if needed, but be careful of cumulative zooming
-                plotter.add_axes()  # Re-add axes to ensure visibility
+                plotter.add_axes(viewport=(0.0, 0.0, 0.15, 0.15))  # Re-add axes with smaller size to avoid large labels
                 plotter.render()  # Render the scene
                 plotter.write_frame()  # Write current frame to movie
                 # Progress reporting

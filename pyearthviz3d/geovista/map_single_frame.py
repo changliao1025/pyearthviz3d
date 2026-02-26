@@ -77,6 +77,8 @@ def map_single_frame(
     retry_on_failure: bool = True,
     return_detailed_result: bool = False,
     base_layer: Optional[str] = "natural_earth_hypsometric",
+    show_edges: bool = False,
+    edge_color: str = "black",
 ) -> Union[bool, SingleFrameResult]:
     """
     Enhanced single frame visualization with comprehensive error handling and validation.
@@ -85,6 +87,7 @@ def map_single_frame(
         pMesh: GeoVista mesh object to visualize
         aValid_cell_indices: Numpy array of indices for valid cells to display
         pConfig: Visualization configuration object
+        style: Mesh rendering style ('surface', 'wireframe', 'points')
         sScalar: Name of scalar field to visualize (None for geometry-only visualization)
         sUnit: Unit string for scalar bar display (e.g., 'm/s', 'kg/m³')
         sFilename_out: Path for output file (None for interactive display)
@@ -97,6 +100,8 @@ def map_single_frame(
             - "natural_earth_1": Natural Earth I texture
             - "blue_marble": NASA Blue Marble texture
             - None: No base layer (empty globe)
+        show_edges: Whether to show mesh cell edges (default: False)
+        edge_color: Color of mesh edges when show_edges is True (default: "black")
 
     Returns:
         bool or SingleFrameResult: Success status (bool for backward compatibility) or detailed result object
@@ -123,13 +128,14 @@ def map_single_frame(
         ...     base_layer="blue_marble",
         ...     return_detailed_result=True
         ... )
-        >>> # Usage with no base layer (empty globe)
+        >>> # Usage with edges displayed
         >>> result = map_single_frame(
         ...     mesh, indices, config,
         ...     sScalar="temperature",
         ...     sUnit="°C",
         ...     sFilename_out="output.png",
-        ...     base_layer=None,
+        ...     show_edges=True,
+        ...     edge_color="white",
         ...     return_detailed_result=True
         ... )
         >>> print(result.get_summary())
@@ -236,6 +242,8 @@ def map_single_frame(
             colormap=pConfig.colormap,
             unit=sUnit or "",
             validate_data=validate_inputs,
+            show_edges=show_edges,
+            edge_color=edge_color,
         )
 
         if not mesh_success:

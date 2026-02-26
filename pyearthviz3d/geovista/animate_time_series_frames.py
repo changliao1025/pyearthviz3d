@@ -114,7 +114,8 @@ def animate_time_series_frames(
 
             # Ensure axes remain visible throughout animation
             try:
-                pPlotter.add_axes()
+                # Use smaller viewport to avoid large axis labels
+                pPlotter.add_axes(viewport=(0.0, 0.0, 0.15, 0.15))
             except Exception:
                 pass  # Axes may already exist
 

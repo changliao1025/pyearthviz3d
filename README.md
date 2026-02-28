@@ -63,18 +63,28 @@ PyEarthViz3D uses modern `pyproject.toml` configuration. To build from source:
 git clone https://github.com/changliao1025/pyearthviz3d.git
 cd pyearthviz3d
 
-# Install dependencies using conda
-conda install numpy gdal geovista
+# Create and activate conda environment from environment.yml (recommended)
+conda env create -f environment.yml
+conda activate pyearthviz3d
 
-# Install pyearth (required dependency)
-conda install pyearth
-
-# Build and install (modern way)
+# Build and install in development mode
 pip install -e .
 
 # Or build a distributable package
-pip install build
 python -m build
+```
+
+**Alternative: Manual dependency installation**
+
+```bash
+# Install dependencies using conda
+conda install numpy gdal geovista pyvista
+
+# Install pyearth (required dependency)
+pip install pyearth>=0.2.2
+
+# Build and install
+pip install -e .
 ```
 
 ### Content

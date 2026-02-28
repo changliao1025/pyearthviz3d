@@ -1,0 +1,30 @@
+name: pyearthviz3d
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Python version
+  - python>=3.9
+
+  # Core dependencies (from pyproject.toml)
+  - numpy
+  - gdal>=3.0
+  - pyvista
+  - geovista
+
+  # PyEarth dependency - install via pip if not on conda
+  - pip
+  - pip:
+      - pyearth>=0.2.2
+
+  # Development dependencies (optional-dependencies.dev from pyproject.toml)
+  - pytest>=7.0.0
+  - pytest-cov>=3.0.0
+  - black>=22.0.0
+  - flake8>=4.0.0
+  - mypy>=0.950
+
+  # Build tools
+  - setuptools>=61.0
+  - wheel
+  - build

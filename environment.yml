@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   # Python version
-  - python>=3.9
+  - python>=3.10
 
   # Core dependencies (from pyproject.toml)
   - numpy

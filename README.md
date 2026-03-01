@@ -1,6 +1,8 @@
 ### PyEarthViz3D
 
 [![DOI](https://zenodo.org/badge/1137225533.svg)](https://doi.org/10.5281/zenodo.18827302)
+[![geovista](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/bjlittle/geovista/main/docs/assets/badge/v0.json)](https://geovista.readthedocs.io/)
+[![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 A lightweight Python package for 3D visualization of Earth science data.
 

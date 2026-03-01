@@ -76,7 +76,7 @@ def map_single_frame(
     validate_inputs: bool = True,
     retry_on_failure: bool = True,
     return_detailed_result: bool = False,
-    base_layer: Optional[str] = "natural_earth_hypsometric",
+    base_layer: Optional[str] = "None",
     show_edges: bool = False,
     edge_color: str = "black",
 ) -> Union[bool, SingleFrameResult]:

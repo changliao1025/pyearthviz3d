@@ -1,8 +1,8 @@
 ### PyEarthViz3D
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6109987.svg)](https://doi.org/10.5281/zenodo.6109987)
+[![DOI](https://zenodo.org/badge/1137225533.svg)](https://doi.org/10.5281/zenodo.18827302)
 
-A lightweight Python package for 3D visualization and plotting of geospatial and Earth science data.
+A lightweight Python package for 3D visualization of Earth science data.
 
 **Note:** PyEarthViz is part of the **PyEarthSuite** ecosystem. The original PyEarth package has been restructured into several specialized packages to keep each package lightweight and focused:
 
@@ -101,17 +101,6 @@ Comprehensive geospatial visualization tools:
 - **Zebra frame**: Add professional zebra-striped coordinate frames
 
 
-
-### Related Packages in EarthSuite
-
-PyEarthViz3D works seamlessly with other EarthSuite packages:
-
-- **[pyearth](https://github.com/changliao1025/pyearth)** - Core GIS operations and spatial toolbox
-- **[pyearthviz3d](https://github.com/changliao1025/pyearthviz3d)** - 3D globe visualization with GeoVista
-- **[pyearthriver](https://github.com/changliao1025/pyearthriver)** - River network topology and graph algorithms
-- **[pyearthmesh](https://github.com/changliao1025/pyearthmesh)** - Advanced mesh generation tools
-- **[pyearthhelp](https://github.com/changliao1025/pyearthhelp)** - Data retrieval and HPC job management
-
 ### Acknowledgment
 
 This research was supported as part of the Next Generation Ecosystem Experiments-Tropics, funded by the U.S. Department of Energy, Office of Science, Office of Biological and Environmental Research at Pacific Northwest National Laboratory. The study was also partly supported by U.S. Department of Energy Office of Science Biological and Environmental Research through the Earth and Environmental System Modeling program as part of the Energy Exascale Earth System Model (E3SM) project.
@@ -132,12 +121,6 @@ Copyright © 2022, Battelle Memorial Institute
 
 ### References
 
-If you make use of `PyEarthViz` in your work, please consider including a reference to the following:
+If you make use of `PyEarthViz3D` in your work, please consider including a reference to the following:
 
-* Chang Liao. (2022). PyEarth: A lightweight Python package for Earth science (Software). Zenodo. https://doi.org/10.5281/zenodo.6109987
-
-PyEarthViz is supporting several research projects and publications, including:
-
-* Liao et al., (2023). pyflowline: a mesh-independent river network generator for hydrologic models. Journal of Open Source Software, 8(91), 5446, https://doi.org/10.21105/joss.05446
-
-* Liao. C. (2022). HexWatershed: a mesh independent flow direction model for hydrologic models (0.1.1). Zenodo. https://doi.org/10.5281/zenodo.6425881
+* Chang Liao. (2026). A lightweight Python package for 3D visualization of Earth science data (v0.1.1). Zenodo. https://doi.org/10.5281/zenodo.18827302

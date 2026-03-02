@@ -596,6 +596,34 @@ class AnimationConfig:
             f"{self.estimated_duration:.1f}s duration, {self.total_rotation:.1f}° total rotation"
         )
 
+def is_running_in_notebook() -> bool:
+    """
+    Detect if the code is running in a Jupyter/IPython notebook environment.
+
+    Returns:
+        bool: True if running in a notebook, False otherwise
+
+    Note:
+        This function checks for the presence of IPython/Jupyter kernel modules
+        and verifies that we're actually in a notebook context (not just IPython shell).
+    """
+    try:
+        # Check for IPython/Jupyter kernel modules
+        in_notebook = "ipykernel" in sys.modules or "IPython" in sys.modules
+        if in_notebook:
+            # Additional check: verify we're actually in a notebook, not just IPython
+            try:
+                from IPython import get_ipython
+
+                ipython = get_ipython()
+                in_notebook = ipython is not None and "IPKernelApp" in str(
+                    type(ipython)
+                )
+            except (ImportError, AttributeError):
+                in_notebook = False
+        return in_notebook
+    except Exception:
+        return False
 
 def setup_geovista_plotter(
     iFlag_off_screen: bool = False, iFlag_verbose_in: bool = False
@@ -1076,7 +1104,7 @@ def add_mesh_to_plotter(
                 # Get actual unique values present in the mesh data
                 mesh_data_values = mesh_valid[scalar_name]
                 actual_unique_values = np.unique(mesh_data_values[np.isfinite(mesh_data_values)])
-                
+
                 # Special treatment for missing data: convert negative values to 0
                 actual_unique_values[actual_unique_values <= 0] = 0
 
@@ -1316,6 +1344,17 @@ def setup_xvfb_if_needed(force_xvfb: bool = False, verbose: bool = False) -> boo
 
         if verbose:
             logger.info("✅ Xvfb started successfully")
+
+        #check if it is in a notebook
+        if is_running_in_notebook():
+            if verbose:
+                logger.info("Running in a notebook, ensuring DISPLAY is set for notebook")
+            #might need to set up the backend for notebook
+            try:
+                pv.set_jupyter_backend("trame") #this is for mybinder
+            except Exception as e:
+                if verbose:
+                    logger.warning(f"Could not set jupyter backend: {e}")
 
         return True
 

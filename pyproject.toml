@@ -22,7 +22,6 @@ keywords = [
     "GIS",
     "geovista",
     "pyvista",
-    "sphere"
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -42,6 +41,7 @@ dependencies = [
     "pyvista",
     "gdal>=3.0.0",
     "pyearth>=0.2.2",
+    "imageio",
 ]
 
 [project.optional-dependencies]

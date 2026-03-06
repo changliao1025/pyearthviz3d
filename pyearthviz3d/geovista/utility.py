@@ -54,6 +54,7 @@ class VisualizationConfig:
         zoom_factor: float = DEFAULT_ZOOM_FACTOR,
         show_coastlines: bool = True,
         show_graticule: bool = True,
+        base_layer: Optional[str] = None,
         colormap: str = "viridis",
         coastline_color: str = "black",
         coastline_width: float = 1.0,
@@ -63,12 +64,35 @@ class VisualizationConfig:
         use_xvfb: Optional[bool] = None,
         force_xvfb: bool = False,
     ):
+        """
+        Initialize visualization configuration.
 
+        Args:
+            longitude_focus: Camera focal point longitude in degrees (-180 to 180)
+            latitude_focus: Camera focal point latitude in degrees (-90 to 90)
+            zoom_factor: Camera zoom level (positive float)
+            show_coastlines: Whether to show coastline overlay
+            show_graticule: Whether to show coordinate grid
+            base_layer: Base layer texture for the globe. Options:
+                - None: No base layer (empty globe)
+                - "natural_earth_hypsometric": Natural Earth hypsometric texture (default)
+                - "natural_earth_1": Natural Earth I texture
+                - "blue_marble": NASA Blue Marble texture
+            colormap: Matplotlib colormap name for scalar visualization
+            coastline_color: Color for coastlines
+            coastline_width: Line width for coastlines
+            verbose: Enable verbose logging
+            window_size: Window size as (width, height)
+            image_scale: Image scaling factor
+            use_xvfb: Whether to use Xvfb (None=auto-detect)
+            force_xvfb: Force Xvfb even if not detected as needed
+        """
         self.longitude_focus = self._validate_longitude(longitude_focus)
         self.latitude_focus = self._validate_latitude(latitude_focus)
         self.zoom_factor = self._validate_zoom_factor(zoom_factor)
         self.show_coastlines = show_coastlines
         self.show_graticule = show_graticule
+        self.base_layer = self._validate_base_layer(base_layer)
         self.colormap = colormap
         self.coastline_color = coastline_color
         self.coastline_width = coastline_width
@@ -100,6 +124,33 @@ class VisualizationConfig:
             )
             return DEFAULT_ZOOM_FACTOR
         return zoom
+
+    def _validate_base_layer(self, layer: Optional[str]) -> Optional[str]:
+        """
+        Validate base layer name.
+
+        Args:
+            layer: Base layer name or None
+
+        Returns:
+            Validated base layer name or None
+        """
+        if layer is None:
+            return None
+
+        valid_layers = [
+            "natural_earth_hypsometric",
+            "natural_earth_1",
+            "blue_marble",
+        ]
+
+        if layer not in valid_layers:
+            logger.warning(
+                f"Unknown base layer '{layer}'. Valid options: {valid_layers}. Using None."
+            )
+            return None
+
+        return layer
 
 
 class MeshHandler:

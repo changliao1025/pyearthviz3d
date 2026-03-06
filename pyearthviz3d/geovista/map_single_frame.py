@@ -76,7 +76,6 @@ def map_single_frame(
     validate_inputs: bool = True,
     retry_on_failure: bool = True,
     return_detailed_result: bool = False,
-    base_layer: Optional[str] = None,
     show_edges: bool = False,
     edge_color: str = "black",
 ) -> Union[bool, SingleFrameResult]:
@@ -86,7 +85,7 @@ def map_single_frame(
     Args:
         pMesh: GeoVista mesh object to visualize
         aValid_cell_indices: Numpy array of indices for valid cells to display
-        pConfig: Visualization configuration object
+        pConfig: Visualization configuration object (use pConfig.base_layer to set base layer)
         style: Mesh rendering style ('surface', 'wireframe', 'points')
         sScalar: Name of scalar field to visualize (None for geometry-only visualization)
         sUnit: Unit string for scalar bar display (e.g., 'm/s', 'kg/m³')
@@ -95,11 +94,6 @@ def map_single_frame(
         validate_inputs: Whether to validate inputs before processing
         retry_on_failure: Whether to attempt recovery strategies on failure
         return_detailed_result: Whether to return detailed result object
-        base_layer: Base layer texture to add to the globe. Options:
-            - "natural_earth_hypsometric" (default): Natural Earth hypsometric texture
-            - "natural_earth_1": Natural Earth I texture
-            - "blue_marble": NASA Blue Marble texture
-            - None: No base layer (empty globe)
         show_edges: Whether to show mesh cell edges (default: False)
         edge_color: Color of mesh edges when show_edges is True (default: "black")
 
@@ -111,24 +105,19 @@ def map_single_frame(
         TypeError: If mesh or config objects are of wrong type
 
     Example:
-        >>> config = VisualizationConfig(longitude_focus=-100, latitude_focus=40)
-        >>> # Simple usage (backward compatible)
+        >>> # Recommended usage: set base_layer in config
+        >>> config = VisualizationConfig(
+        ...     longitude_focus=-100,
+        ...     latitude_focus=40,
+        ...     base_layer="blue_marble"
+        ... )
         >>> success = map_single_frame(
         ...     mesh, indices, config,
         ...     sScalar="temperature",
         ...     sUnit="°C",
         ...     sFilename_out="output.png"
         ... )
-        >>> # Advanced usage with detailed results and custom base layer
-        >>> result = map_single_frame(
-        ...     mesh, indices, config,
-        ...     sScalar="temperature",
-        ...     sUnit="°C",
-        ...     sFilename_out="output.png",
-        ...     base_layer="blue_marble",
-        ...     return_detailed_result=True
-        ... )
-        >>> # Usage with edges displayed
+        >>> # Advanced usage with detailed results
         >>> result = map_single_frame(
         ...     mesh, indices, config,
         ...     sScalar="temperature",
@@ -140,6 +129,8 @@ def map_single_frame(
         ... )
         >>> print(result.get_summary())
     """
+
+    actual_base_layer = pConfig.base_layer
 
     # Input validation
     if validate_inputs:
@@ -188,28 +179,28 @@ def map_single_frame(
             force_xvfb=pConfig.force_xvfb,
         )
 
-        # Add base layer if specified
-        if base_layer is not None:
+        # Add base layer if specified (use actual_base_layer which respects backward compatibility)
+        if actual_base_layer is not None:
             try:
-                if base_layer == "natural_earth_hypsometric":
+                if actual_base_layer == "natural_earth_hypsometric":
                     plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
-                elif base_layer == "natural_earth_1":
+                elif actual_base_layer == "natural_earth_1":
                     plotter.add_base_layer(texture=gv.natural_earth_1())
-                elif base_layer == "blue_marble":
+                elif actual_base_layer == "blue_marble":
                     plotter.add_base_layer(texture=gv.blue_marble())
                 else:
                     # Try to use the base_layer string as a direct texture name
-                    texture_func = getattr(gv, base_layer, None)
+                    texture_func = getattr(gv, actual_base_layer, None)
                     if texture_func and callable(texture_func):
                         plotter.add_base_layer(texture=texture_func())
                     else:
-                        logger.warning(f"Unknown base layer '{base_layer}', using natural_earth_hypsometric")
+                        logger.warning(f"Unknown base layer '{actual_base_layer}', using natural_earth_hypsometric")
                         plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
 
                 if pConfig.verbose:
-                    logger.info(f"🌍 Added base layer: {base_layer}")
+                    logger.info(f"🌍 Added base layer: {actual_base_layer}")
             except Exception as e:
-                logger.warning(f"Failed to add base layer '{base_layer}': {e}")
+                logger.warning(f"Failed to add base layer '{actual_base_layer}': {e}")
                 if pConfig.verbose:
                     logger.info("Continuing without base layer...")
         else:

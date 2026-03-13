@@ -63,6 +63,8 @@ class VisualizationConfig:
         image_scale: float = 1.0,
         use_xvfb: Optional[bool] = None,
         force_xvfb: bool = False,
+        base_layer_opacity: float = 1.0,
+        mesh_opacity: float = 1.0,
     ):
         """
         Initialize visualization configuration.
@@ -101,6 +103,21 @@ class VisualizationConfig:
         self.image_scale = image_scale
         self.use_xvfb = use_xvfb  # None=auto-detect, True=force use, False=don't use
         self.force_xvfb = force_xvfb
+        # Opacity controls (0.0 transparent .. 1.0 opaque)
+        self.base_layer_opacity = self._validate_opacity(base_layer_opacity, "base_layer")
+        self.mesh_opacity = self._validate_opacity(mesh_opacity, "mesh")
+
+    def _validate_opacity(self, value: float, name: str) -> float:
+        """Validate opacity in range [0.0, 1.0]."""
+        try:
+            val = float(value)
+        except Exception:
+            logger.warning(f"Invalid {name} opacity '{value}', using 1.0")
+            return 1.0
+        if val < 0.0 or val > 1.0:
+            logger.warning(f"{name} opacity {val} out of range [0,1], clamping")
+            return float(np.clip(val, 0.0, 1.0))
+        return val
 
     def _validate_longitude(self, lon: float) -> float:
         """Validate and clamp longitude to valid range."""

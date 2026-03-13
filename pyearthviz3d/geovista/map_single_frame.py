@@ -199,6 +199,22 @@ def map_single_frame(
 
                 if pConfig.verbose:
                     logger.info(f"🌍 Added base layer: {actual_base_layer}")
+                # Apply base layer opacity if requested
+                try:
+                    if hasattr(pConfig, "base_layer_opacity") and pConfig.base_layer_opacity < 1.0:
+                        # Attempt to set opacity on all renderer actors (best-effort)
+                        renderer = getattr(plotter, "renderer", None)
+                        if renderer is not None and hasattr(renderer, "actors"):
+                            for _id, actor in list(renderer.actors.items()):
+                                try:
+                                    actor.GetProperty().SetOpacity(pConfig.base_layer_opacity)
+                                except Exception:
+                                    # best-effort: ignore actors that don't support opacity
+                                    pass
+                except Exception:
+                    # Don't fail visualization if opacity setting fails
+                    if pConfig.verbose:
+                        logger.debug("Could not apply base layer opacity; continuing")
             except Exception as e:
                 logger.warning(f"Failed to add base layer '{actual_base_layer}': {e}")
                 if pConfig.verbose:
@@ -223,6 +239,15 @@ def map_single_frame(
         if pConfig.verbose:
             logger.info("📐 Adding mesh data to plotter...")
 
+        # Determine effective mesh opacity. If a base layer is used and the
+        # user did not explicitly change mesh_opacity (left at default 1.0),
+        # use a slightly reduced default so the base layer remains visible.
+        effective_mesh_opacity = getattr(pConfig, "mesh_opacity", 1.0)
+        if pConfig.base_layer is not None and getattr(pConfig, "mesh_opacity", 1.0) == 1.0:
+            effective_mesh_opacity = 0.9
+            if pConfig.verbose:
+                logger.info(f"Using reduced mesh opacity {effective_mesh_opacity} because base layer is present")
+
         mesh_success = add_mesh_to_plotter(
             plotter=plotter,
             mesh=pMesh,
@@ -233,6 +258,7 @@ def map_single_frame(
             colormap=pConfig.colormap,
             unit=sUnit or "",
             validate_data=validate_inputs,
+            opacity=effective_mesh_opacity,
             show_edges=show_edges,
             edge_color=edge_color,
         )

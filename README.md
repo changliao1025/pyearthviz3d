@@ -125,4 +125,4 @@ Copyright © 2022, Battelle Memorial Institute
 
 If you make use of `PyEarthViz3D` in your work, please consider including a reference to the following:
 
-* Chang Liao. (2026). A lightweight Python package for 3D visualization of Earth science data (v0.1.1). Zenodo. https://doi.org/10.5281/zenodo.18827302
+* Chang Liao. (2026). A lightweight Python package for 3D visualization of Earth science data (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18827302

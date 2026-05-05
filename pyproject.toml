@@ -37,6 +37,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
+    "vtk==9.3.0",
     "geovista",
     "pyvista",
     "gdal>=3.0.0",

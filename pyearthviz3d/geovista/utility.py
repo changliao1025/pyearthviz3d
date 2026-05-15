@@ -55,6 +55,7 @@ class VisualizationConfig:
         show_coastlines: bool = True,
         show_graticule: bool = True,
         base_layer: Optional[str] = None,
+        color: str = "blue",
         colormap: str = "viridis",
         coastline_color: str = "black",
         coastline_width: float = 1.0,
@@ -95,6 +96,7 @@ class VisualizationConfig:
         self.show_coastlines = show_coastlines
         self.show_graticule = show_graticule
         self.base_layer = self._validate_base_layer(base_layer)
+        self.color = color
         self.colormap = colormap
         self.coastline_color = coastline_color
         self.coastline_width = coastline_width
@@ -1145,7 +1147,7 @@ def add_mesh_to_plotter(
             return False
 
         # Configure scalar visualization
-        if scalar_name:
+        if scalar_name and colormap is not None:
             # Get scalar information
             scalar_info = MeshHandler.get_scalar_info(mesh_valid, scalar_name)
             if not scalar_info["exists"]:

@@ -3,14 +3,16 @@
 [![DOI](https://zenodo.org/badge/1137225533.svg)](https://doi.org/10.5281/zenodo.18827302)
 [![geovista](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/bjlittle/geovista/main/docs/assets/badge/v0.json)](https://geovista.readthedocs.io/)
 [![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![PyPI Downloads](https://static.pepy.tech/badge/pyearthviz3d)](https://pepy.tech/project/pyearthviz3d)
+[![Conda Downloads](https://anaconda.org/conda-forge/pyearthviz3d/badges/downloads.svg)](https://anaconda.org/conda-forge/pyearthviz3d)
 
 A lightweight Python package for 3D visualization of Earth science data.
 
-**Note:** PyEarthViz is part of the **PyEarthSuite** ecosystem. The original PyEarth package has been restructured into several specialized packages to keep each package lightweight and focused:
+**Note:** PyEarthViz3D is part of the **PyEarthSuite** ecosystem. The original PyEarth package has been restructured into several specialized packages to keep each package lightweight and focused:
 
 - **[pyearth](https://github.com/changliao1025/pyearth)** - Core GIS operations, spatial toolbox, and system utilities
-- **[pyearthviz](https://github.com/changliao1025/pyearthviz)** (this package) - 2D visualization utilities
-- **[pyearthviz3d](https://github.com/changliao1025/pyearthviz3d)** - 3D visualization with GeoVista
+- **[pyearthviz](https://github.com/changliao1025/pyearthviz)** - 2D visualization utilities
+- **[pyearthviz3d](https://github.com/changliao1025/pyearthviz3d)** (this package) - 3D visualization with GeoVista
 - **[pyearthriver](https://github.com/changliao1025/pyearthriver)** - River network graph algorithms and data structures
 - **[pyearthmesh](https://github.com/changliao1025/pyearthmesh)** - Mesh generation and manipulation tools (currently not implemented)
 - **[pyearthhelp](https://github.com/changliao1025/pyearthhelp)** - Helper utilities for data access (NWIS, NLDI, GSIM) and HPC operations

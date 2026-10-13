@@ -23,13 +23,19 @@ import traceback
 import math
 from typing import Optional, List, Union, Dict, Any, Tuple
 import numpy as np
-from osgeo import gdal, ogr, osr
+
+from ._vector import (
+    load_vector_geometries,
+    geometries_to_polydata,
+    normalize_vector_inputs,
+)
 
 # Import from utility module
 from pyearthviz3d.geovista.utility import (
     VisualizationConfig,
     ScalarBarConfig,
     AnimationConfig,
+    AnimationResult,
     PlotterManager,
     MeshHandler,
     CameraController,
@@ -93,115 +99,19 @@ class VectorLayerConfig:
         return f"VectorLayerConfig({name}, color={self.color}, linewidth={self.linewidth})"
 
 
-class AnimationResult:
-    """Result object for animation operations."""
-
-    def __init__(
-        self,
-        success: bool,
-        message: str = "",
-        file_info: Optional[Dict[str, Any]] = None,
-        animation_info: Optional[Dict[str, Any]] = None,
-        layer_info: Optional[Dict[str, Any]] = None,
-        system_info: Optional[Dict[str, Any]] = None,
-    ):
-        self.success = success
-        self.message = message
-        self.file_info = file_info or {}
-        self.animation_info = animation_info or {}
-        self.layer_info = layer_info or {}
-        self.system_info = system_info or {}
-
-    def __str__(self) -> str:
-        return f"AnimationResult(success={self.success}, message='{self.message}')"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def get_summary(self) -> str:
-        """Get formatted summary of animation result."""
-        if not self.success:
-            return f"❌ Visualization failed: {self.message}"
-
-        lines = ["✅ Visualization completed successfully"]
-
-        if self.file_info:
-            lines.append(f"📁 File: {self.file_info.get('filename', 'N/A')}")
-            size_mb = self.file_info.get('size_mb', 0)
-            if size_mb > 0:
-                lines.append(f"📏 Size: {size_mb:.2f} MB")
-
-        if self.layer_info:
-            if 'mesh' in self.layer_info:
-                lines.append(f"🗺️  Mesh: {self.layer_info['mesh'].get('cells', 0)} cells")
-            if 'vectors' in self.layer_info:
-                n_layers = len(self.layer_info['vectors'])
-                lines.append(f"📍 Vector layers: {n_layers}")
-                for i, vinfo in enumerate(self.layer_info['vectors'], 1):
-                    name = vinfo.get('name', f'Layer {i}')
-                    features = vinfo.get('features', 0)
-                    lines.append(f"   {i}. {name}: {features} features")
-
-        if self.animation_info:
-            frames = self.animation_info.get('frames', 0)
-            duration = self.animation_info.get('duration', 0)
-            if frames > 0:
-                lines.append(f"🎬 Animation: {frames} frames, {duration:.1f}s")
-
-        return "\n".join(lines)
+# AnimationResult is imported from pyearthviz3d.geovista.utility
 
 
 def _normalize_vector_inputs(
     aFilename_vector_in: Union[str, List[str], None],
     aVector_config: Union[VectorLayerConfig, List[VectorLayerConfig], None],
 ) -> Tuple[List[str], List[VectorLayerConfig]]:
-    """
-    Normalize vector inputs to lists.
-
-    Handles:
-    - Single file + single config
-    - Single file + no config (use default)
-    - List of files + single config (apply to all)
-    - List of files + list of configs (one-to-one)
-    - List of files + no config (use defaults)
-
-    Args:
-        aFilename_vector_in: Single file path or list of file paths
-        aVector_config: Single config or list of configs
-
-    Returns:
-        Tuple of (list of file paths, list of configs)
-
-    Raises:
-        ValueError: If config list length doesn't match file list length
-    """
-    # Handle None inputs
-    if aFilename_vector_in is None:
-        return [], []
-
-    # Normalize file paths to list
-    if isinstance(aFilename_vector_in, str):
-        file_paths = [aFilename_vector_in]
-    else:
-        file_paths = list(aFilename_vector_in)
-
-    # Normalize configs to list
-    if aVector_config is None:
-        # Use default config for all files
-        configs = [VectorLayerConfig() for _ in file_paths]
-    elif isinstance(aVector_config, VectorLayerConfig):
-        # Single config - apply to all files
-        configs = [aVector_config for _ in file_paths]
-    else:
-        # List of configs
-        configs = list(aVector_config)
-        if len(configs) != len(file_paths):
-            raise ValueError(
-                f"Number of vector configs ({len(configs)}) must match "
-                f"number of vector files ({len(file_paths)})"
-            )
-
-    return file_paths, configs
+    """Normalize vector inputs to lists using helper function."""
+    return normalize_vector_inputs(
+        aFilename_vector_in=aFilename_vector_in,
+        aVector_config=aVector_config,
+        default_config_factory=VectorLayerConfig,
+    )
 
 
 def _load_vector_data(
@@ -209,130 +119,15 @@ def _load_vector_data(
     config: VectorLayerConfig,
     verbose: bool = False,
 ) -> Tuple[List[Any], List[float], Dict[str, Any]]:
-    """
-    Load vector data from file using GDAL/OGR.
-
-    Args:
-        filename: Path to vector file
-        config: Vector layer configuration
-        verbose: Enable verbose logging
-
-    Returns:
-        Tuple of (geometries, linewidths, info_dict)
-        - geometries: List of OGR geometry objects
-        - linewidths: List of line widths (scaled if attribute specified)
-        - info_dict: Dictionary with layer information
-
-    Raises:
-        FileNotFoundError: If file doesn't exist
-        RuntimeError: If file cannot be opened or read
-    """
-    if not os.path.exists(filename):
-        raise FileNotFoundError(f"Vector file not found: {filename}")
-
-    try:
-        # Open the vector dataset
-        dataset = ogr.Open(filename, gdal.GA_ReadOnly)
-        if dataset is None:
-            raise RuntimeError(f"Could not open vector file: {filename}")
-
-        # Get the first layer
-        layer = dataset.GetLayer(0)
-        if layer is None:
-            raise RuntimeError("Could not get layer from dataset")
-
-        feature_count = layer.GetFeatureCount()
-        if verbose:
-            logger.info(f"Loading {feature_count} features from {os.path.basename(filename)}")
-
-        # Get spatial reference and setup transformation if needed
-        spatial_ref = layer.GetSpatialRef()
-        wgs84_srs = osr.SpatialReference()
-        wgs84_srs.ImportFromEPSG(4326)
-
-        transform = None
-        if spatial_ref is not None:
-            spatial_ref_wkt = spatial_ref.ExportToWkt()
-            wgs84_wkt = wgs84_srs.ExportToWkt()
-            if spatial_ref_wkt != wgs84_wkt:
-                if verbose:
-                    logger.info("Setting up coordinate transformation to WGS84")
-                transform = osr.CoordinateTransformation(spatial_ref, wgs84_srs)
-
-        # Collect geometries and attributes
-        geometries = []
-        linewidth_values = []
-
-        layer.ResetReading()
-        for feature in layer:
-            geometry = feature.GetGeometryRef()
-            if geometry is None:
-                continue
-
-            geom_name = geometry.GetGeometryName()
-
-            # Support LineString, MultiLineString, Point, MultiPoint
-            if geom_name in ["LINESTRING", "MULTILINESTRING", "POINT", "MULTIPOINT", "POLYGON", "MULTIPOLYGON"]:
-                # Clone geometry
-                geom_clone = geometry.Clone()
-
-                # Transform to WGS84 if needed
-                if transform is not None:
-                    geom_clone.Transform(transform)
-
-                geometries.append(geom_clone)
-
-                # Extract line width attribute if specified
-                if config.linewidth_attribute is not None:
-                    try:
-                        width_value = feature.GetField(config.linewidth_attribute)
-                        if width_value is not None:
-                            linewidth_values.append(float(width_value))
-                        else:
-                            linewidth_values.append(config.linewidth)
-                    except Exception as e:
-                        if verbose:
-                            logger.warning(
-                                f"Could not read attribute {config.linewidth_attribute}: {e}"
-                            )
-                        linewidth_values.append(config.linewidth)
-                else:
-                    linewidth_values.append(config.linewidth)
-
-        if len(geometries) == 0:
-            raise RuntimeError("No valid geometries found in file")
-
-        # Scale linewidths if attribute was used
-        scaled_widths = []
-        if config.linewidth_attribute is not None and len(linewidth_values) > 0:
-            data_min, data_max = min(linewidth_values), max(linewidth_values)
-            if data_max > data_min:
-                for val in linewidth_values:
-                    scaled_width = config.linewidth_range[0] + (val - data_min) / (
-                        data_max - data_min
-                    ) * (config.linewidth_range[1] - config.linewidth_range[0])
-                    scaled_widths.append(scaled_width)
-                if verbose:
-                    logger.info(
-                        f'Using variable line widths from attribute "{config.linewidth_attribute}" '
-                        f'(range: {data_min:.2f} to {data_max:.2f})'
-                    )
-            else:
-                scaled_widths = [config.linewidth] * len(geometries)
-        else:
-            scaled_widths = linewidth_values
-
-        info_dict = {
-            "filename": filename,
-            "features": len(geometries),
-            "name": config.layer_name or os.path.basename(filename),
-        }
-
-        return geometries, scaled_widths, info_dict
-
-    except Exception as e:
-        logger.error(f"Failed to load vector data from {filename}: {e}")
-        raise
+    """Load vector data from file using GDAL/OGR helper."""
+    return load_vector_geometries(
+        filename=filename,
+        linewidth_attribute=config.linewidth_attribute,
+        default_linewidth=config.linewidth,
+        linewidth_range=config.linewidth_range,
+        layer_name=config.layer_name,
+        verbose=verbose,
+    )
 
 
 def _add_vector_layer(
@@ -342,87 +137,12 @@ def _add_vector_layer(
     config: VectorLayerConfig,
     verbose: bool = False,
 ) -> bool:
-    """
-    Add a single vector layer to the plotter.
-
-    Args:
-        plotter: GeoVista plotter instance
-        geometries: List of OGR geometry objects
-        linewidths: List of line widths for each geometry
-        config: Vector layer configuration
-        verbose: Enable verbose logging
-
-    Returns:
-        bool: True if successful
-    """
+    """Add a single vector layer to the plotter using geometries_to_polydata."""
     try:
-        import pyvista as pv
-        import geovista as gv
-
-        if verbose:
-            logger.info(f"Processing {len(geometries)} geometries...")
-
-        # Convert lat/lon to Cartesian coordinates directly
-        # This is much faster than using gv_line for each geometry
-        all_points = []
-        all_lines = []
-        point_offset = 0
-
-        for i, geometry in enumerate(geometries):
-            points = geometry.GetPoints()
-            if points is None or len(points) < 2:
-                continue
-
-            # Extract coordinates
-            lons = np.array([point[0] for point in points])
-            lats = np.array([point[1] for point in points])
-
-            # Convert to Cartesian coordinates (sphere with radius 1)
-            # Using standard spherical to Cartesian conversion
-            lons_rad = np.deg2rad(lons)
-            lats_rad = np.deg2rad(lats)
-
-            x = np.cos(lats_rad) * np.cos(lons_rad)
-            y = np.cos(lats_rad) * np.sin(lons_rad)
-            z = np.sin(lats_rad)
-
-            # Add points
-            for j in range(len(points)):
-                all_points.append([x[j], y[j], z[j]])
-
-            # Create line connectivity
-            n_points = len(points)
-            line = [n_points] + list(range(point_offset, point_offset + n_points))
-            all_lines.append(line)
-            point_offset += n_points
-
-            # Progress reporting for large datasets
-            if verbose and len(geometries) > 10000 and (i + 1) % 50000 == 0:
-                logger.info(f"  Processed {i + 1}/{len(geometries)} geometries...")
-
-        if len(all_points) == 0:
-            logger.error("No valid geometries found")
+        combined_mesh = geometries_to_polydata(geometries, radius=1.0, verbose=verbose)
+        if combined_mesh is None:
             return False
 
-        if verbose:
-            logger.info(f"Creating mesh with {len(all_points)} points and {len(all_lines)} lines...")
-
-        # Create PyVista PolyData directly
-        points_array = np.array(all_points, dtype=np.float64)
-
-        # Flatten lines array for PyVista
-        lines_flat = []
-        for line in all_lines:
-            lines_flat.extend(line)
-        lines_array = np.array(lines_flat, dtype=np.int64)
-
-        # Create mesh
-        combined_mesh = pv.PolyData(points_array, lines=lines_array)
-
-        if verbose:
-            logger.info(f"Mesh created successfully with {combined_mesh.n_points} points and {combined_mesh.n_cells} cells")
-
-        # Add to plotter with uniform width (variable width would require per-point data)
         plotter.add_mesh(
             combined_mesh,
             color=config.color,
@@ -433,8 +153,8 @@ def _add_vector_layer(
 
         if verbose:
             logger.info(
-                f"✓ Added vector layer '{config.layer_name or 'unnamed'}' "
-                f"with {len(all_lines)} features"
+                f"? Added vector layer '{config.layer_name or 'unnamed'}' "
+                f"with {combined_mesh.n_cells} features"
             )
 
         return True
@@ -466,21 +186,15 @@ def _add_multiple_vector_layers(
     layer_info = {"vectors": []}
 
     # Sort by z_order for proper rendering
-    sorted_items = sorted(
-        zip(file_paths, configs), key=lambda x: x[1].z_order
-    )
+    sorted_items = sorted(zip(file_paths, configs), key=lambda x: x[1].z_order)
 
     for file_path, config in sorted_items:
         try:
             # Load vector data
-            geometries, linewidths, info = _load_vector_data(
-                file_path, config, verbose
-            )
+            geometries, linewidths, info = _load_vector_data(file_path, config, verbose)
 
             # Add to plotter
-            success = _add_vector_layer(
-                plotter, geometries, linewidths, config, verbose
-            )
+            success = _add_vector_layer(plotter, geometries, linewidths, config, verbose)
 
             if success:
                 layer_info["vectors"].append(info)
@@ -516,9 +230,7 @@ def _create_animation_frames(
     """
     try:
         if verbose:
-            logger.info(
-                f"Creating {animation_config.frames} frames for animation..."
-            )
+            logger.info(f"Creating {animation_config.frames} frames for animation...")
 
         # Open movie file
         plotter.open_movie(output_filename, framerate=animation_config.framerate)
@@ -633,9 +345,7 @@ def animate_mesh_with_vector_files(
 
     try:
         # Normalize vector inputs
-        vector_files, vector_configs = _normalize_vector_inputs(
-            aFilename_vector_in, aVector_config
-        )
+        vector_files, vector_configs = _normalize_vector_inputs(aFilename_vector_in, aVector_config)
 
         # Validate inputs
         if pMesh is None and len(vector_files) == 0:
@@ -683,6 +393,7 @@ def animate_mesh_with_vector_files(
         if pConfig.base_layer is not None:
             try:
                 import geovista as gv
+
                 if pConfig.base_layer == "natural_earth_hypsometric":
                     plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
                 elif pConfig.base_layer == "natural_earth_1":
@@ -709,7 +420,7 @@ def animate_mesh_with_vector_files(
                 scalar_name=sScalar,
                 scalar_config=scalar_config,
                 colormap=pConfig.colormap,
-                color= pConfig.color,
+                color=pConfig.color,
                 unit=sUnit or "",
                 validate_data=validate_inputs,
                 opacity=getattr(pConfig, "mesh_opacity", 1.0),
@@ -820,7 +531,7 @@ def animate_mesh_with_vector_files(
 
     finally:
         # Cleanup
-        if 'plotter' in locals() and plotter is not None:
+        if "plotter" in locals() and plotter is not None:
             try:
                 plotter.close()
                 if verbose:

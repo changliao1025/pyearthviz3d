@@ -30,6 +30,9 @@ from .geovista import (
     animate_polyline_file_on_sphere,
     animate_rotating_frames,
     animate_time_series_frames,
+    animate_mesh_with_vector_files,
+    VectorLayerConfig,
+    AnimationResult,
 )
 
 __all__ = [
@@ -37,4 +40,7 @@ __all__ = [
     "animate_polyline_file_on_sphere",
     "animate_rotating_frames",
     "animate_time_series_frames",
+    "animate_mesh_with_vector_files",
+    "VectorLayerConfig",
+    "AnimationResult",
 ]

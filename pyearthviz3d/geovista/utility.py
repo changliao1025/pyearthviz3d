@@ -9,6 +9,7 @@ import logging
 from ._camera import CameraController, configure_camera, configure_camera_enhanced
 from ._config import (
     AnimationConfig,
+    AnimationResult,
     CameraPosition,
     COORDINATE_BOUNDS,
     CRS,

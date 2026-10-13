@@ -14,6 +14,7 @@ import numpy as np
 from pyearthviz3d.geovista.utility import (
     VisualizationConfig,
     AnimationConfig,
+    AnimationResult,
     ScalarBarConfig,
     PlotterManager,
     MeshHandler,
@@ -30,48 +31,7 @@ from pyearthviz3d.geovista.utility import (
 logger = logging.getLogger(__name__)
 
 
-class AnimationResult:
-    """Result object for animation operations with comprehensive information."""
-
-    def __init__(
-        self,
-        success: bool,
-        message: str = "",
-        file_info: Optional[Dict[str, Any]] = None,
-        animation_info: Optional[Dict[str, Any]] = None,
-        frame_info: Optional[Dict[str, Any]] = None,
-        system_info: Optional[Dict[str, Any]] = None,
-    ):
-        self.success = success
-        self.message = message
-        self.file_info = file_info or {}
-        self.animation_info = animation_info or {}
-        self.frame_info = frame_info or {}
-        self.system_info = system_info or {}
-
-    def __str__(self) -> str:
-        return f"AnimationResult(success={self.success}, message='{self.message}')"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def get_summary(self) -> str:
-        """Get a formatted summary of the animation result."""
-        if not self.success:
-            return f"❌ Animation failed: {self.message}"
-
-        lines = ["✅ Animation completed successfully"]
-
-        if self.file_info:
-            lines.append(f"📁 File: {self.file_info.get('filename', 'N/A')}")
-            lines.append(f"📏 Size: {self.file_info.get('size_mb', 0):.2f} MB")
-
-        if self.animation_info:
-            lines.append(f"🎬 Frames: {self.animation_info.get('total_frames', 0)}")
-            lines.append(f"⏱️ Duration: {self.animation_info.get('duration', 0):.1f}s")
-            lines.append(f"🎯 FPS: {self.animation_info.get('framerate', 0)}")
-
-        return "\n".join(lines)
+# AnimationResult is imported from pyearthviz3d.geovista.utility
 
 
 def animate_rotating_frames(
@@ -140,9 +100,7 @@ def animate_rotating_frames(
             pMesh, aValid_cell_indices, pConfig, pConfig_anima, sFilename_out
         )
         if validation_errors:
-            error_msg = (
-                f"Animation input validation failed: {'; '.join(validation_errors)}"
-            )
+            error_msg = f"Animation input validation failed: {'; '.join(validation_errors)}"
             logger.error(error_msg)
             result = AnimationResult(False, error_msg, system_info=get_system_info())
             return result if return_detailed_result else False
@@ -174,9 +132,7 @@ def animate_rotating_frames(
             result = AnimationResult(False, error_msg)
             return result if return_detailed_result else False
 
-        is_valid, validation_msg = validate_output_filename(
-            sFilename_out, VALID_ANIMATION_FORMATS
-        )
+        is_valid, validation_msg = validate_output_filename(sFilename_out, VALID_ANIMATION_FORMATS)
         if not is_valid:
             error_msg = f"Animation filename validation failed: {validation_msg}"
             logger.error(error_msg)
@@ -253,9 +209,7 @@ def animate_rotating_frames(
 
         # Initialize movie recording
         if pConfig.verbose:
-            logger.info(
-                f"🎥 Initializing movie recording at {pConfig_anima.framerate} FPS..."
-            )
+            logger.info(f"🎥 Initializing movie recording at {pConfig_anima.framerate} FPS...")
 
         try:
             plotter.open_movie(sFilename_out, framerate=pConfig_anima.framerate)
@@ -301,10 +255,7 @@ def animate_rotating_frames(
                     progress_callback(frame_idx + 1, pConfig_anima.frames, percentage)
 
                 # Periodic progress logging
-                if (
-                    pConfig.verbose
-                    and (frame_idx + 1) % max(1, pConfig_anima.frames // 10) == 0
-                ):
+                if pConfig.verbose and (frame_idx + 1) % max(1, pConfig_anima.frames // 10) == 0:
                     progress = ((frame_idx + 1) / pConfig_anima.frames) * 100
                     elapsed = time.time() - start_time
                     est_total = elapsed * pConfig_anima.frames / (frame_idx + 1)
@@ -312,9 +263,7 @@ def animate_rotating_frames(
                     logger.info(
                         f"  📈 Progress: {progress:.0f}% ({frame_idx + 1}/{pConfig_anima.frames} frames)"
                     )
-                    logger.info(
-                        f"  ⏱️ Elapsed: {elapsed:.1f}s, Remaining: ~{remaining:.1f}s"
-                    )
+                    logger.info(f"  ⏱️ Elapsed: {elapsed:.1f}s, Remaining: ~{remaining:.1f}s")
 
             except Exception as e:
                 failed_frames.append(frame_idx + 1)
@@ -375,8 +324,7 @@ def animate_rotating_frames(
             "successful": progress_info["frames_completed"] - len(failed_frames),
             "failed": len(failed_frames),
             "success_rate": (
-                (progress_info["frames_completed"] - len(failed_frames))
-                / pConfig_anima.frames
+                (progress_info["frames_completed"] - len(failed_frames)) / pConfig_anima.frames
             )
             * 100,
             "failed_frame_numbers": failed_frames,
@@ -597,9 +545,7 @@ def create_animation_preview(
                     )
 
             except Exception as e:
-                preview_info["errors"].append(
-                    f"Error generating preview frame {frame_idx}: {e}"
-                )
+                preview_info["errors"].append(f"Error generating preview frame {frame_idx}: {e}")
 
         preview_info["success"] = len(preview_info["generated_files"]) > 0
 

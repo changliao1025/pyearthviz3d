@@ -35,6 +35,7 @@ from pyearthviz3d.geovista.utility import (
     VisualizationConfig,
     ScalarBarConfig,
     AnimationConfig,
+    AnimationResult,
     PlotterManager,
     MeshHandler,
     CameraController,
@@ -98,62 +99,7 @@ class VectorLayerConfig:
         return f"VectorLayerConfig({name}, color={self.color}, linewidth={self.linewidth})"
 
 
-class AnimationResult:
-    """Result object for animation operations."""
-
-    def __init__(
-        self,
-        success: bool,
-        message: str = "",
-        file_info: Optional[Dict[str, Any]] = None,
-        animation_info: Optional[Dict[str, Any]] = None,
-        layer_info: Optional[Dict[str, Any]] = None,
-        system_info: Optional[Dict[str, Any]] = None,
-    ):
-        self.success = success
-        self.message = message
-        self.file_info = file_info or {}
-        self.animation_info = animation_info or {}
-        self.layer_info = layer_info or {}
-        self.system_info = system_info or {}
-
-    def __str__(self) -> str:
-        return f"AnimationResult(success={self.success}, message='{self.message}')"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def get_summary(self) -> str:
-        """Get formatted summary of animation result."""
-        if not self.success:
-            return f"❌ Visualization failed: {self.message}"
-
-        lines = ["✅ Visualization completed successfully"]
-
-        if self.file_info:
-            lines.append(f"📁 File: {self.file_info.get('filename', 'N/A')}")
-            size_mb = self.file_info.get("size_mb", 0)
-            if size_mb > 0:
-                lines.append(f"📏 Size: {size_mb:.2f} MB")
-
-        if self.layer_info:
-            if "mesh" in self.layer_info:
-                lines.append(f"🗺️  Mesh: {self.layer_info['mesh'].get('cells', 0)} cells")
-            if "vectors" in self.layer_info:
-                n_layers = len(self.layer_info["vectors"])
-                lines.append(f"📍 Vector layers: {n_layers}")
-                for i, vinfo in enumerate(self.layer_info["vectors"], 1):
-                    name = vinfo.get("name", f"Layer {i}")
-                    features = vinfo.get("features", 0)
-                    lines.append(f"   {i}. {name}: {features} features")
-
-        if self.animation_info:
-            frames = self.animation_info.get("frames", 0)
-            duration = self.animation_info.get("duration", 0)
-            if frames > 0:
-                lines.append(f"🎬 Animation: {frames} frames, {duration:.1f}s")
-
-        return "\n".join(lines)
+# AnimationResult is imported from pyearthviz3d.geovista.utility
 
 
 def _normalize_vector_inputs(

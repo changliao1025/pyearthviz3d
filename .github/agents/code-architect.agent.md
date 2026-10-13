@@ -1,5 +1,5 @@
 ---
-name: "Code Architect"
+name: "code architect"
 description: "Analyzes Python workspace structure, module dependencies, and architectural patterns to provide high-level insights."
 tools: ["read_file", "search_workspace"]
 user-invocable: true

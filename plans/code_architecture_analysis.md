@@ -7,9 +7,10 @@ This document records a static analysis of the `pyearthviz3d` codebase as a work
 The package is centered on `pyearthviz3d.geovista`. The broad dependency flow is:
 
 ```text
-package facades
-    -> visualization modules
-        -> shared utility module
+package facades (pyearthviz3d, geovista)
+    -> visualization modules (map_single_frame, animate_*)
+        -> focused internal modules (_config, _camera, _mesh, _plotter, _environment)
+           [and utility.py as a backward-compatibility facade]
             -> GeoVista / PyVista and related dependencies
 ```
 

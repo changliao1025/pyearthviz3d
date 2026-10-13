@@ -460,9 +460,9 @@ class AnimationResult:
     def get_summary(self) -> str:
         """Get formatted summary of animation result."""
         if not self.success:
-            return f"? Animation failed: {self.message}"
+            return f"Operation failed: {self.message}"
 
-        lines = ["? Animation completed successfully"]
+        lines = ["Operation completed successfully"]
 
         if self.file_info:
             lines.append(f"?? File: {self.file_info.get('filename', 'N/A')}")

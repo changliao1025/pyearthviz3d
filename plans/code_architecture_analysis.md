@@ -9,9 +9,9 @@ The package is centered on `pyearthviz3d.geovista`. The broad dependency flow is
 ```text
 package facades (pyearthviz3d, geovista)
     -> visualization modules (map_single_frame, animate_*)
-        -> focused internal modules (_config, _camera, _mesh, _plotter, _environment)
+        -> focused internal modules (_config, _camera, _mesh, _plotter, _environment, _vector)
            [and utility.py as a backward-compatibility facade]
-            -> GeoVista / PyVista and related dependencies
+            -> GeoVista / PyVista and related dependencies (plus GDAL/OGR via _vector)
 ```
 
 Vector-file visualization paths additionally depend on GDAL/OGR. No direct internal circular import was identified in the static review.
@@ -26,9 +26,9 @@ The split retains the existing implementations and APIs while narrowing each mod
 
 ### 2. Vector ingestion and rendering are coupled
 
-[`animate_polyline_file_on_sphere.py`](../pyearthviz3d/geovista/animate_polyline_file_on_sphere.py) and [`animate_mesh_with_vector_files.py`](../pyearthviz3d/geovista/animate_mesh_with_vector_files.py) combine vector-file handling and geometry conversion with rendering orchestration.
+**Status: Implemented.** Vector I/O, OGR coordinate transformation to WGS84, attribute scaling, and PyVista spherical PolyData construction have been extracted into [`_vector.py`](../pyearthviz3d/geovista/_vector.py).
 
-**Suggested direction:** isolate vector loading and coordinate/geometry conversion behind focused internal helpers, keeping visualization functions responsible for coordinating rendering.
+Both [`animate_polyline_file_on_sphere.py`](../pyearthviz3d/geovista/animate_polyline_file_on_sphere.py) and [`animate_mesh_with_vector_files.py`](../pyearthviz3d/geovista/animate_mesh_with_vector_files.py) now delegate vector parsing and geometry-to-mesh conversion to these helpers, separating data loading/conversion from visualization orchestration.
 
 ### 3. The public API differs between package levels
 

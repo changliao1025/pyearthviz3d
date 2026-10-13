@@ -3,49 +3,19 @@ import logging
 import traceback
 import math
 import numpy as np
-from osgeo import gdal, ogr, osr
 from geovista.geodesic import line as gv_line
+
+from ._vector import (
+    geometries_to_polydata,
+    load_vector_geometries,
+    transform_vectors_sph_to_cart,
+)
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 
-def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):
-    """Transform vectors from spherical (r, phi, theta) to cartesian coordinates (z, y, x).
-
-    Note the "reverse" order of arrays's axes, commonly used in geosciences.
-
-    Parameters
-    ----------
-    theta : array_like[float]
-        Azimuthal angle in degrees ``[0, 360]`` of shape (M,)
-    phi : array_like[float]
-        Polar (zenith) angle in degrees ``[0, 180]`` of shape (N,)
-    r : array_like[float]
-        Distance (radius) from the point of origin of shape (P,)
-    u : array_like[float]
-        X-component of the vector of shape (P, N, M)
-    v : array_like[float]
-        Y-component of the vector of shape (P, N, M)
-    w : array_like[float]
-        Z-component of the vector of shape (P, N, M)
-
-    Returns
-    -------
-    u_t, v_t, w_t : :class:`numpy.ndarray`
-        Arrays of transformed x-, y-, z-components, respectively.
-
-    """
-    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing="ij")
-    th, ph = xx.squeeze(), yy.squeeze()
-
-    # Transform wind components from spherical to cartesian coordinates
-    # https://en.wikipedia.org/wiki/Vector_fields_in_cylindrical_and_spherical_coordinates
-    u_t = np.sin(ph) * np.cos(th) * w + np.cos(ph) * np.cos(th) * v - np.sin(th) * u
-    v_t = np.sin(ph) * np.sin(th) * w + np.cos(ph) * np.sin(th) * v + np.cos(th) * u
-    w_t = np.cos(ph) * w - np.sin(ph) * v
-
-    return u_t, v_t, w_t
+# transform_vectors_sph_to_cart is imported from ._vector
 
 
 def animate_polyline_file_on_sphere(
@@ -126,15 +96,11 @@ def animate_polyline_file_on_sphere(
     dLatitude_focus = dLatitude_focus_in if dLatitude_focus_in is not None else 0.0
 
     if not (-180 <= dLongitude_focus <= 180):
-        logger.warning(
-            f"Longitude focus {dLongitude_focus} out of range [-180, 180], clamping"
-        )
+        logger.warning(f"Longitude focus {dLongitude_focus} out of range [-180, 180], clamping")
         dLongitude_focus = np.clip(dLongitude_focus, -180, 180)
 
     if not (-90 <= dLatitude_focus <= 90):
-        logger.warning(
-            f"Latitude focus {dLatitude_focus} out of range [-90, 90], clamping"
-        )
+        logger.warning(f"Latitude focus {dLatitude_focus} out of range [-90, 90], clamping")
         dLatitude_focus = np.clip(dLatitude_focus, -90, 90)
 
     # Validate zoom factor
@@ -149,10 +115,7 @@ def animate_polyline_file_on_sphere(
 
     # Validate output file path if provided
     if sFilename_animation_out is not None:
-        if (
-            not isinstance(sFilename_animation_out, str)
-            or not sFilename_animation_out.strip()
-        ):
+        if not isinstance(sFilename_animation_out, str) or not sFilename_animation_out.strip():
             logger.error("Output filename must be a non-empty string")
             return False
 
@@ -202,124 +165,26 @@ def animate_polyline_file_on_sphere(
         logger.info(f"  - Line color: {sColor_polyline_in}")
         logger.info(f"  - Line width: {dLinewidth_in}")
 
-        # Load polyline data using GDAL/OGR
+        # Load polyline data using vector helper
         try:
-            # Open the vector dataset
-            pDataset = ogr.Open(sFilename_polyline_in, gdal.GA_ReadOnly)
-            if pDataset is None:
-                logger.error(f"Could not open vector file: {sFilename_polyline_in}")
-                return False
-
-            # Get the first layer (assuming single layer)
-            pLayer = pDataset.GetLayer(0)
-            if pLayer is None:
-                logger.error("Could not get layer from dataset")
-                return False
-
-            lFeatureCount = pLayer.GetFeatureCount()
-            logger.info(f"Loaded {lFeatureCount} features from vector file")
-
-            if lFeatureCount == 0:
-                logger.error("No features found in the input file")
-                return False
-
-            # Get spatial reference
-            pSpatialRef = pLayer.GetSpatialRef()
-            logger.debug(f"Input spatial reference: {pSpatialRef}")
-            pSpatialRef_wkt = (
-                pSpatialRef.ExportToWkt() if pSpatialRef is not None else "None"
+            aLineGeometries, scaled_widths, layer_info = load_vector_geometries(
+                filename=sFilename_polyline_in,
+                linewidth_attribute=sLinewidth_attribute_in,
+                default_linewidth=dLinewidth_in,
+                linewidth_range=(dLinewidth_min_in, dLinewidth_max_in),
+                allowed_geom_types=["LINESTRING", "MULTILINESTRING"],
+                verbose=False,
             )
-
-            # Check if we need coordinate transformation to WGS84
-            wgs84_srs = osr.SpatialReference()
-            wgs84_srs.ImportFromEPSG(4326)
-            wgs84_wkt = wgs84_srs.ExportToWkt()
-
-            pTransform = None
-            if pSpatialRef_wkt != wgs84_wkt:
-                logger.info("Setting up coordinate transformation to WGS84")
-                pTransform = osr.CoordinateTransformation(pSpatialRef, wgs84_srs)
-
         except Exception as e:
             logger.error(f"Failed to read polyline file: {e}")
             return False
-
-        # Collect valid line geometries and attributes
-        aLineGeometries = []
-        aLinewidthValues = []
-
-        # Reset layer reading to start from the beginning
-        pLayer.ResetReading()
-
-        for pFeature in pLayer:
-            pGeometry = pFeature.GetGeometryRef()
-            if pGeometry is None:
-                continue
-
-            geom_type = pGeometry.GetGeometryType()
-            geom_name = pGeometry.GetGeometryName()
-
-            # Check for LineString or MultiLineString
-            if geom_name == "LINESTRING" or geom_name == "MULTILINESTRING":
-                # Clone geometry to avoid issues with feature lifecycle
-                pGeomClone = pGeometry.Clone()
-
-                # Transform to WGS84 if needed
-                if pTransform is not None:
-                    pGeomClone.Transform(pTransform)
-
-                aLineGeometries.append(pGeomClone)
-
-                # Extract line width attribute if specified
-                if sLinewidth_attribute_in is not None:
-                    try:
-                        width_value = pFeature.GetField(sLinewidth_attribute_in)
-                        if width_value is not None:
-                            aLinewidthValues.append(float(width_value))
-                        else:
-                            aLinewidthValues.append(dLinewidth_in)
-                    except Exception as e:
-                        logger.warning(
-                            f"Could not read attribute {sLinewidth_attribute_in}: {e}"
-                        )
-                        aLinewidthValues.append(dLinewidth_in)
-                else:
-                    aLinewidthValues.append(dLinewidth_in)
-            else:
-                logger.debug(f"Skipping geometry type: {geom_name}")
 
         if len(aLineGeometries) == 0:
             logger.error("No valid LineString or MultiLineString geometries found")
             return False
 
         logger.info(f"Found {len(aLineGeometries)} valid line geometries")
-
-        # Handle line width data
-        use_variable_width = False
-        scaled_widths = []
-
-        if sLinewidth_attribute_in is not None and len(aLinewidthValues) > 0:
-            # Use attribute data from file
-            use_variable_width = True
-            # Scale the attribute values to the specified range
-            data_min, data_max = min(aLinewidthValues), max(aLinewidthValues)
-            if data_max > data_min:
-                for val in aLinewidthValues:
-                    scaled_width = dLinewidth_min_in + (val - data_min) / (
-                        data_max - data_min
-                    ) * (dLinewidth_max_in - dLinewidth_min_in)
-                    scaled_widths.append(scaled_width)
-                logger.info(
-                    f'Using variable line widths from attribute "{sLinewidth_attribute_in}" (range: {data_min:.2f} to {data_max:.2f})'
-                )
-                logger.info(
-                    f"Scaled to width range: {dLinewidth_min_in} to {dLinewidth_max_in}"
-                )
-            else:
-                scaled_widths = [dLinewidth_in] * len(aLineGeometries)
-        else:
-            # Use uniform line width
-            scaled_widths = [dLinewidth_in] * len(aLineGeometries)
+        use_variable_width = sLinewidth_attribute_in is not None
 
         # Create 3D plotter
         if sFilename_animation_out is not None:
@@ -345,9 +210,7 @@ def animate_polyline_file_on_sphere(
             all_lats_list = []
             polyline_count = 0
 
-            logger.info(
-                "Processing polylines for GeoVista multi-line batch visualization..."
-            )
+            logger.info("Processing polylines for GeoVista multi-line batch visualization...")
 
             for geom_idx, pGeometry in enumerate(aLineGeometries):
                 try:
@@ -363,9 +226,7 @@ def animate_polyline_file_on_sphere(
                     polyline_count += 1
 
                 except Exception as e:
-                    logger.warning(
-                        f"Error processing geometry at index {geom_idx}: {e}"
-                    )
+                    logger.warning(f"Error processing geometry at index {geom_idx}: {e}")
                     continue
 
             if polyline_count == 0:
@@ -388,9 +249,7 @@ def animate_polyline_file_on_sphere(
                         num_points = len(all_lons_list[i])
                         point_widths.extend([width] * num_points)
 
-                    combined_flow_field.point_data["line_width"] = np.array(
-                        point_widths
-                    )
+                    combined_flow_field.point_data["line_width"] = np.array(point_widths)
 
                     plotter.add_mesh(
                         combined_flow_field,
@@ -404,12 +263,8 @@ def animate_polyline_file_on_sphere(
                     )
 
                 except Exception as width_error:
-                    logger.warning(
-                        f"Variable width with combined mesh failed: {width_error}"
-                    )
-                    logger.info(
-                        "Falling back to individual mesh processing for variable widths..."
-                    )
+                    logger.warning(f"Variable width with combined mesh failed: {width_error}")
+                    logger.info("Falling back to individual mesh processing for variable widths...")
 
                     # Fallback: Individual processing for variable line widths
                     polyline_count = 0
@@ -434,15 +289,11 @@ def animate_polyline_file_on_sphere(
                             polyline_count += 1
 
                         except Exception as e:
-                            logger.warning(
-                                f"Error processing geometry at index {geom_idx}: {e}"
-                            )
+                            logger.warning(f"Error processing geometry at index {geom_idx}: {e}")
                             continue
 
                     if polyline_count == 0:
-                        logger.error(
-                            "No valid polylines could be processed for visualization"
-                        )
+                        logger.error("No valid polylines could be processed for visualization")
                         return False
 
                     logger.info(
@@ -461,67 +312,15 @@ def animate_polyline_file_on_sphere(
                 )
 
         except Exception as e:
-            logger.error(
-                f"GeoVista multi-line failed, trying PyVista batch method: {e}"
-            )
+            logger.error(f"GeoVista multi-line failed, trying PyVista batch method: {e}")
 
             # Method 2: Combine all polylines into a single PyVista PolyData object
             try:
-                import pyvista as pv
-
-                # Collect all line coordinates and connectivity
-                all_points = []
-                all_lines = []
-                point_offset = 0
-                polyline_count = 0
-
                 logger.info("Processing polylines for PyVista batch visualization...")
-
-                for geom_idx, pGeometry in enumerate(aLineGeometries):
-                    try:
-                        # Get points from the geometry
-                        points = pGeometry.GetPoints()
-                        if points is None or len(points) < 2:
-                            continue
-
-                        # Extract longitude and latitude, convert to 3D coordinates on sphere
-                        for point in points:
-                            lon, lat = point[0], point[1]
-                            # Convert to Cartesian coordinates on unit sphere
-                            lon_rad = math.radians(lon)
-                            lat_rad = math.radians(lat)
-                            x = math.cos(lat_rad) * math.cos(lon_rad)
-                            y = math.cos(lat_rad) * math.sin(lon_rad)
-                            z = math.sin(lat_rad)
-                            all_points.append([x, y, z])
-
-                        # Create line connectivity
-                        num_points_in_line = len(points)
-                        if num_points_in_line >= 2:
-                            line = [
-                                num_points_in_line
-                            ]  # First element is number of points
-                            line.extend(
-                                range(point_offset, point_offset + num_points_in_line)
-                            )
-                            all_lines.extend(line)
-                            point_offset += num_points_in_line
-                            polyline_count += 1
-
-                    except Exception as e:
-                        logger.warning(
-                            f"Error processing geometry at index {geom_idx}: {e}"
-                        )
-                        continue
-
-                if polyline_count == 0:
-                    logger.error(
-                        "No valid polylines could be processed for visualization"
-                    )
+                polydata = geometries_to_polydata(aLineGeometries, radius=1.0, verbose=False)
+                if polydata is None or polydata.n_cells == 0:
+                    logger.error("No valid polylines could be processed for visualization")
                     return False
-
-                # Create single PyVista PolyData object with all polylines
-                polydata = pv.PolyData(all_points, lines=all_lines)
 
                 # Add the combined mesh to plotter - single operation instead of loop
                 plotter.add_mesh(
@@ -532,13 +331,12 @@ def animate_polyline_file_on_sphere(
                 )
 
                 logger.info(
-                    f"✓ Successfully added {polyline_count} polylines as single PyVista combined mesh"
+                    f"? Successfully added {polydata.n_cells} polylines as single PyVista combined mesh"
                 )
-                logger.info(f"  Total points: {len(all_points)}")
+                logger.info(f"  Total points: {polydata.n_points}")
                 logger.info(
-                    f"  Combined into 1 mesh operation (vs {polyline_count} separate operations)"
+                    f"  Combined into 1 mesh operation (vs {polydata.n_cells} separate operations)"
                 )
-
             except Exception as e:
                 logger.error(
                     f"PyVista batch method failed, falling back to individual processing: {e}"
@@ -567,15 +365,11 @@ def animate_polyline_file_on_sphere(
                         polyline_count += 1
 
                     except Exception as e:
-                        logger.warning(
-                            f"Error processing geometry at index {geom_idx}: {e}"
-                        )
+                        logger.warning(f"Error processing geometry at index {geom_idx}: {e}")
                         continue
 
                 if polyline_count == 0:
-                    logger.error(
-                        "No valid polylines could be processed for visualization"
-                    )
+                    logger.error("No valid polylines could be processed for visualization")
                     return False
 
                 logger.info(
@@ -608,9 +402,7 @@ def animate_polyline_file_on_sphere(
             plotter.camera.position = camera_position
             plotter.camera.zoom(dZoom_factor)
 
-            logger.debug(
-                f"Camera configured: focal={focal_point}, position={camera_position}"
-            )
+            logger.debug(f"Camera configured: focal={focal_point}, position={camera_position}")
         except Exception as e:
             logger.warning(f"Error setting camera position: {e}. Using default view.")
 
@@ -689,9 +481,7 @@ def animate_polyline_file_on_sphere(
                 return True
             except Exception as e:
                 logger.error(f"Failed to display interactive visualization: {e}")
-                logger.error(
-                    f"Ensure display environment is available (X11, Wayland, etc.)"
-                )
+                logger.error(f"Ensure display environment is available (X11, Wayland, etc.)")
                 logger.error(f"Traceback: {traceback.format_exc()}")
                 plotter.close()
                 return False
@@ -750,9 +540,7 @@ def _create_rotation_animation(
                 logger.warning("FFmpeg backend not available. MP4 creation may fail.")
                 logger.warning("Install with: pip install imageio[ffmpeg]")
         except ImportError as e:
-            logger.error(
-                "ImageIO library not available. Install with: pip install imageio[ffmpeg]"
-            )
+            logger.error("ImageIO library not available. Install with: pip install imageio[ffmpeg]")
             logger.error(f"Import error: {e}")
             return False
         import math
@@ -764,13 +552,9 @@ def _create_rotation_animation(
         # Ensure proper animation speed calculation
         if dAnimation_speed <= 0 or dAnimation_speed is None:
             dAnimation_speed = 360.0 / iAnimation_frames
-            logger.info(
-                f"Auto-calculated animation speed: {dAnimation_speed:.2f}° per frame"
-            )
+            logger.info(f"Auto-calculated animation speed: {dAnimation_speed:.2f}° per frame")
         else:
-            logger.info(
-                f"Using provided animation speed: {dAnimation_speed:.2f}° per frame"
-            )
+            logger.info(f"Using provided animation speed: {dAnimation_speed:.2f}° per frame")
         # Validate output format and check backend availability
         valid_formats = ["mp4", "gif", "avi"]
         original_format = sAnimation_format.lower()
@@ -785,21 +569,15 @@ def _create_rotation_animation(
                 os.remove(sFilename_out)
                 logger.info(f"Deleted existing animation file: {sFilename_out}")
             except Exception as e:
-                logger.error(
-                    f"Cannot delete existing animation file {sFilename_out}: {e}"
-                )
+                logger.error(f"Cannot delete existing animation file {sFilename_out}: {e}")
                 return False
         # Prepare output filename
         base_name = os.path.splitext(sFilename_out)[0]
         animation_filename = f"{base_name}.{sAnimation_format.lower()}"
         if sAnimation_format != original_format:
-            logger.info(
-                f"Output format changed from {original_format} to {sAnimation_format}"
-            )
+            logger.info(f"Output format changed from {original_format} to {sAnimation_format}")
         # Use PyVista's built-in movie functionality - no temporary files needed
-        logger.info(
-            f"Creating {iAnimation_frames} frames for 360° rotation animation..."
-        )
+        logger.info(f"Creating {iAnimation_frames} frames for 360° rotation animation...")
         logger.info(f"Animation will be saved as: {animation_filename}")
         # Use PyVista's built-in movie functionality
         logger.info("Creating animation using PyVista movie writer...")
@@ -840,7 +618,9 @@ def _create_rotation_animation(
                 plotter.camera.focal_point = focal_point
                 plotter.camera.position = camera_position
                 # plotter.camera.zoom(1.0) #apply zoom if needed, but be careful of cumulative zooming
-                plotter.add_axes(viewport=(0.0, 0.0, 0.15, 0.15))  # Re-add axes with smaller size to avoid large labels
+                plotter.add_axes(
+                    viewport=(0.0, 0.0, 0.15, 0.15)
+                )  # Re-add axes with smaller size to avoid large labels
                 plotter.render()  # Render the scene
                 plotter.write_frame()  # Write current frame to movie
                 # Progress reporting

@@ -44,3 +44,6 @@ jupyter lab
 ```
 
 Or open any notebook directly within Visual Studio Code by selecting the `uraster` kernel.
+
+### 3. Interactive In-Cell 3D Rendering (WebGL)
+The notebooks are configured to use PyVista's embeddable `"html"` backend (`pv.set_jupyter_backend("html")`), which packages the 3D WebGL scene inline. This avoids iframe port-blocking issues in VS Code webviews and provides smooth, immediate mouse rotation and zooming right inside your notebook cells.

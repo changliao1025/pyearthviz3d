@@ -24,6 +24,12 @@ dependencies:
   - flake8>=4.0.0
   - mypy>=0.950
 
+  # Jupyter interactive dependencies (optional-dependencies.jupyter from pyproject.toml)
+  - ipywidgets>=8.0.0
+  - trame>=3.5.0
+  - trame-vtk>=2.8.0
+  - trame-vuetify>=2.4.0
+
   # Build tools
   - setuptools>=61.0
   - wheel

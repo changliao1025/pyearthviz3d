@@ -37,6 +37,27 @@ try:
 except Exception:
     pass
 
+# Apply runtime compatibility safeguard for trame-vtk client-side wheel zoom
+try:
+    from trame_vtk.modules.vtk.protocols import mouse_handler
+
+    if hasattr(mouse_handler, "vtkWebMouseHandler"):
+        _orig_update_zoomFromWheel = (
+            mouse_handler.vtkWebMouseHandler.update_zoomFromWheel
+        )
+
+        def _safe_update_zoomFromWheel(self, event):
+            interactor = self.get_interactor(event)
+            if interactor is not None and interactor.GetInteractorStyle() is None:
+                return
+            return _orig_update_zoomFromWheel(self, event)
+
+        mouse_handler.vtkWebMouseHandler.update_zoomFromWheel = (
+            _safe_update_zoomFromWheel
+        )
+except Exception:
+    pass
+
 # Import main geovista functions for convenience
 from .geovista import (
     AnimationConfig,

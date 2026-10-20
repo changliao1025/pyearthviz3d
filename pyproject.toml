@@ -52,6 +52,12 @@ dev = [
     "flake8>=4.0.0",
     "mypy>=0.950",
 ]
+jupyter = [
+    "trame",
+    "trame-vtk",
+    "trame-vuetify",
+    "ipywidgets",
+]
 
 [project.urls]
 Homepage = "https://github.com/changliao1025/pyearthviz3d"

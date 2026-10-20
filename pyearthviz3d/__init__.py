@@ -24,10 +24,26 @@ __author__ = "Chang Liao"
 __email__ = "changliao.climate@gmail.com"
 __url__ = "https://github.com/changliao1025/pyearthviz3d"
 
+# Apply compatibility patch between modern PyVista and GeoVista if needed
+try:
+    import pyvista as pv
+
+    if hasattr(pv, "core") and hasattr(pv.core, "dataset"):
+        ActiveArrayInfoTuple = getattr(pv.core.dataset, "ActiveArrayInfoTuple", None)
+        if ActiveArrayInfoTuple is not None and not hasattr(
+            ActiveArrayInfoTuple, "_namedtuple"
+        ):
+            ActiveArrayInfoTuple._namedtuple = property(lambda self: self)
+except Exception:
+    pass
+
 # Import main geovista functions for convenience
 from .geovista import (
+    AnimationConfig,
     AnimationResult,
+    ScalarBarConfig,
     VectorLayerConfig,
+    VisualizationConfig,
     animate_mesh_with_vector_files,
     animate_polyline_file_on_sphere,
     animate_rotating_frames,
@@ -41,6 +57,9 @@ __all__ = [
     "animate_rotating_frames",
     "animate_time_series_frames",
     "animate_mesh_with_vector_files",
+    "VisualizationConfig",
+    "AnimationConfig",
+    "ScalarBarConfig",
     "VectorLayerConfig",
     "AnimationResult",
 ]

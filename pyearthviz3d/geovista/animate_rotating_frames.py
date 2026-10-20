@@ -161,7 +161,28 @@ def animate_rotating_frames(
             result = AnimationResult(False, error_msg, system_info=get_system_info())
             return result if return_detailed_result else False
 
-        plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
+        # Add base layer if requested
+        if pConfig.base_layer is not None:
+            try:
+                import geovista as gv
+
+                if pConfig.base_layer == "natural_earth_hypsometric":
+                    plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
+                elif pConfig.base_layer == "natural_earth_1":
+                    plotter.add_base_layer(texture=gv.natural_earth_1())
+                elif pConfig.base_layer == "blue_marble":
+                    plotter.add_base_layer(texture=gv.blue_marble())
+                else:
+                    texture_func = getattr(gv, pConfig.base_layer, None)
+                    if texture_func and callable(texture_func):
+                        plotter.add_base_layer(texture=texture_func())
+                    else:
+                        plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
+
+                if pConfig.verbose:
+                    logger.info(f"🌍 Added base layer: {pConfig.base_layer}")
+            except Exception as e:
+                logger.warning(f"Failed to add base layer '{pConfig.base_layer}': {e}")
 
         progress_info["plotter_created"] = True
 

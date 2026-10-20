@@ -16,8 +16,13 @@ Classes:
     AnimationResult: Result object for animation operations
 """
 
-from .animate_mesh_with_vector_files import (
+from ._config import (
+    AnimationConfig,
     AnimationResult,
+    ScalarBarConfig,
+    VisualizationConfig,
+)
+from .animate_mesh_with_vector_files import (
     VectorLayerConfig,
     animate_mesh_with_vector_files,
 )
@@ -32,6 +37,9 @@ __all__ = [
     "animate_rotating_frames",
     "animate_time_series_frames",
     "animate_mesh_with_vector_files",
+    "VisualizationConfig",
+    "AnimationConfig",
+    "ScalarBarConfig",
     "VectorLayerConfig",
     "AnimationResult",
 ]

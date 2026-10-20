@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "pyearthviz3d: 3D globe visualization tools for geospatial data on spherical Earth"
+version: 0.1.2
+date-released: 2026-03-30
+url: "https://github.com/changliao1025/pyearthviz3d"
+repository-code: "https://github.com/changliao1025/pyearthviz3d"
+license: BSD-3-Clause
+authors:
+  - family-names: Liao
+    given-names: Chang
+    email: changliao.climate@gmail.com
+    orcid: "https://orcid.org/0000-0002-7348-8858"
+keywords:
+  - visualization
+  - "3D"
+  - globe
+  - geospatial
+  - GIS
+  - geovista
+  - pyvista
+  - mesh
+  - earth-science

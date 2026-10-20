@@ -200,12 +200,22 @@ def add_mesh_to_plotter(
                 cmap_name = f"discrete_lucc_{id(value_colors)}"
                 cmap = ListedColormap(colors_rgb, name=cmap_name, N=n_categories)
 
+                import matplotlib
+
                 # Register the colormap with matplotlib
                 try:
-                    plt.cm.unregister_cmap(cmap_name)
-                except Exception:
-                    pass
-                plt.cm.register_cmap(cmap=cmap, name=cmap_name)
+                    if hasattr(matplotlib, "colormaps") and hasattr(
+                        matplotlib.colormaps, "register"
+                    ):
+                        matplotlib.colormaps.register(cmap, name=cmap_name, force=True)
+                    elif hasattr(plt.cm, "register_cmap"):
+                        try:
+                            plt.cm.unregister_cmap(cmap_name)
+                        except Exception:
+                            pass
+                        plt.cm.register_cmap(cmap=cmap, name=cmap_name)
+                except Exception as register_err:
+                    logger.debug(f"Colormap registration note: {register_err}")
 
                 # Create annotations dictionary mapping sequential indices to labels
                 annotations = {

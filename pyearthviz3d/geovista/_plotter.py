@@ -9,6 +9,26 @@ from ._environment import detect_headless_environment, setup_xvfb_if_needed
 logger = logging.getLogger(__name__)
 
 
+def _patch_pyvista_compatibility() -> None:
+    """Ensure compatibility between modern PyVista and GeoVista core."""
+    try:
+        import pyvista as pv
+
+        if hasattr(pv, "core") and hasattr(pv.core, "dataset"):
+            ActiveArrayInfoTuple = getattr(
+                pv.core.dataset, "ActiveArrayInfoTuple", None
+            )
+            if ActiveArrayInfoTuple is not None and not hasattr(
+                ActiveArrayInfoTuple, "_namedtuple"
+            ):
+                ActiveArrayInfoTuple._namedtuple = property(lambda self: self)
+    except Exception:
+        pass
+
+
+_patch_pyvista_compatibility()
+
+
 def setup_geovista_plotter(
     iFlag_off_screen: bool = False, iFlag_verbose_in: bool = False
 ):

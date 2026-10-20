@@ -9,6 +9,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 from osgeo import gdal, ogr, osr
 
+ogr.UseExceptions()
+
 logger = logging.getLogger(__name__)
 
 

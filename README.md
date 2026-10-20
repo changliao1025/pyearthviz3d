@@ -24,9 +24,6 @@ This modular approach allows you to install only what you need while maintaining
 PyEarthViz3D is designed to be lightweight, versatile, and reliable for creating publication-quality 3D visualizations of geospatial and scientific data. It provides a comprehensive suite of plotting functions built on top of matplotlib and cartopy, with specialized tools for:
 
 - Geographic mapping and spatial data visualization
-- Time series analysis and plotting
-- Statistical plots (scatter, histogram, box plots, etc.)
-- Advanced plot types (ridge plots, ladder plots, animations)
 - Customizable color schemes and styling
 
 If you find this package useful, please cite it in your work.

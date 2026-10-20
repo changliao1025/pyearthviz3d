@@ -5,27 +5,24 @@ This module provides improved animation capabilities with comprehensive error ha
 validation, progress tracking, and enhanced user experience.
 """
 
-import os
 import logging
+import os
 import traceback
-from typing import Optional, Dict, Any, List, Tuple, Callable, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
-from pyearthviz3d.geovista.utility import (
-    VisualizationConfig,
+from ._camera import CameraController, configure_camera_enhanced
+from ._config import (
+    VALID_ANIMATION_FORMATS,
     AnimationConfig,
     AnimationResult,
     ScalarBarConfig,
-    PlotterManager,
-    MeshHandler,
-    CameraController,
-    configure_camera_enhanced,
-    add_geographic_context_enhanced,
-    add_mesh_to_plotter,
-    validate_output_filename,
-    get_system_info,
-    VALID_ANIMATION_FORMATS,
+    VisualizationConfig,
 )
+from ._environment import get_system_info, validate_output_filename
+from ._mesh import MeshHandler, add_mesh_to_plotter
+from ._plotter import PlotterManager, add_geographic_context_enhanced
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -100,7 +97,9 @@ def animate_rotating_frames(
             pMesh, aValid_cell_indices, pConfig, pConfig_anima, sFilename_out
         )
         if validation_errors:
-            error_msg = f"Animation input validation failed: {'; '.join(validation_errors)}"
+            error_msg = (
+                f"Animation input validation failed: {'; '.join(validation_errors)}"
+            )
             logger.error(error_msg)
             result = AnimationResult(False, error_msg, system_info=get_system_info())
             return result if return_detailed_result else False
@@ -132,7 +131,9 @@ def animate_rotating_frames(
             result = AnimationResult(False, error_msg)
             return result if return_detailed_result else False
 
-        is_valid, validation_msg = validate_output_filename(sFilename_out, VALID_ANIMATION_FORMATS)
+        is_valid, validation_msg = validate_output_filename(
+            sFilename_out, VALID_ANIMATION_FORMATS
+        )
         if not is_valid:
             error_msg = f"Animation filename validation failed: {validation_msg}"
             logger.error(error_msg)
@@ -209,7 +210,9 @@ def animate_rotating_frames(
 
         # Initialize movie recording
         if pConfig.verbose:
-            logger.info(f"🎥 Initializing movie recording at {pConfig_anima.framerate} FPS...")
+            logger.info(
+                f"🎥 Initializing movie recording at {pConfig_anima.framerate} FPS..."
+            )
 
         try:
             plotter.open_movie(sFilename_out, framerate=pConfig_anima.framerate)
@@ -255,7 +258,10 @@ def animate_rotating_frames(
                     progress_callback(frame_idx + 1, pConfig_anima.frames, percentage)
 
                 # Periodic progress logging
-                if pConfig.verbose and (frame_idx + 1) % max(1, pConfig_anima.frames // 10) == 0:
+                if (
+                    pConfig.verbose
+                    and (frame_idx + 1) % max(1, pConfig_anima.frames // 10) == 0
+                ):
                     progress = ((frame_idx + 1) / pConfig_anima.frames) * 100
                     elapsed = time.time() - start_time
                     est_total = elapsed * pConfig_anima.frames / (frame_idx + 1)
@@ -263,7 +269,9 @@ def animate_rotating_frames(
                     logger.info(
                         f"  📈 Progress: {progress:.0f}% ({frame_idx + 1}/{pConfig_anima.frames} frames)"
                     )
-                    logger.info(f"  ⏱️ Elapsed: {elapsed:.1f}s, Remaining: ~{remaining:.1f}s")
+                    logger.info(
+                        f"  ⏱️ Elapsed: {elapsed:.1f}s, Remaining: ~{remaining:.1f}s"
+                    )
 
             except Exception as e:
                 failed_frames.append(frame_idx + 1)
@@ -324,7 +332,8 @@ def animate_rotating_frames(
             "successful": progress_info["frames_completed"] - len(failed_frames),
             "failed": len(failed_frames),
             "success_rate": (
-                (progress_info["frames_completed"] - len(failed_frames)) / pConfig_anima.frames
+                (progress_info["frames_completed"] - len(failed_frames))
+                / pConfig_anima.frames
             )
             * 100,
             "failed_frame_numbers": failed_frames,
@@ -466,7 +475,7 @@ def create_animation_preview(
     Returns:
         Dict with preview information and generated file paths
     """
-    preview_info = {
+    preview_info: Dict[str, Any] = {
         "success": False,
         "generated_files": [],
         "errors": [],
@@ -487,7 +496,7 @@ def create_animation_preview(
                 frame_indices.append(anim_config.frames - 1)
 
         # Import here to avoid circular imports
-        from .map_single_frame import map_single_frame_enhanced
+        from .map_single_frame import SingleFrameResult, map_single_frame
 
         # Generate preview frames
         for i, frame_idx in enumerate(frame_indices):
@@ -518,18 +527,18 @@ def create_animation_preview(
                     output_dir, f"preview_frame_{i:03d}_of_{frame_idx:03d}.png"
                 )
 
-                result = map_single_frame_enhanced(
-                    mesh=mesh,
-                    valid_cell_indices=valid_cell_indices,
-                    config=frame_config,
-                    scalar_name=scalar_name,
-                    unit=unit,
-                    output_filename=output_file,
+                result = map_single_frame(
+                    pMesh=mesh,
+                    aValid_cell_indices=valid_cell_indices,
+                    pConfig=frame_config,
+                    sScalar=scalar_name,
+                    sUnit=unit,
+                    sFilename_out=output_file,
                     validate_inputs=True,
                     return_detailed_result=True,
                 )
 
-                if result.success:
+                if isinstance(result, SingleFrameResult) and result.success:
                     preview_info["generated_files"].append(output_file)
                     preview_info["frame_positions"].append(
                         {
@@ -540,12 +549,19 @@ def create_animation_preview(
                         }
                     )
                 else:
+                    error_msg = (
+                        result.message
+                        if isinstance(result, SingleFrameResult)
+                        else "Visualization failed"
+                    )
                     preview_info["errors"].append(
-                        f"Failed to generate frame {frame_idx}: {result.message}"
+                        f"Failed to generate frame {frame_idx}: {error_msg}"
                     )
 
             except Exception as e:
-                preview_info["errors"].append(f"Error generating preview frame {frame_idx}: {e}")
+                preview_info["errors"].append(
+                    f"Error generating preview frame {frame_idx}: {e}"
+                )
 
         preview_info["success"] = len(preview_info["generated_files"]) > 0
 

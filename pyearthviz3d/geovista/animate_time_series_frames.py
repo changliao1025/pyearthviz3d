@@ -1,20 +1,21 @@
-import os
 import logging
 import math
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
-from typing import Optional, List, Tuple, Union, Dict, Any
 
 logger = logging.getLogger(__name__)
 import traceback
-from pyearthviz3d.geovista.utility import (
-    VisualizationConfig,
-    AnimationConfig,
-    setup_geovista_plotter,
-    configure_camera,
-    add_geographic_context,
-    DEFAULT_EARTH_RADIUS,
+
+from ._camera import configure_camera
+from ._config import (
     DEFAULT_CAMERA_DISTANCE_MULTIPLIER,
+    DEFAULT_EARTH_RADIUS,
+    AnimationConfig,
+    VisualizationConfig,
 )
+from ._plotter import add_geographic_context, setup_geovista_plotter
 
 
 def animate_time_series_frames(

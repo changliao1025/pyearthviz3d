@@ -1,9 +1,11 @@
-import os
 import logging
-import traceback
 import math
+import os
+import traceback
+
 import numpy as np
 from geovista.geodesic import line as gv_line
+from osgeo import gdal, ogr, osr
 
 from ._vector import (
     geometries_to_polydata,
@@ -96,11 +98,15 @@ def animate_polyline_file_on_sphere(
     dLatitude_focus = dLatitude_focus_in if dLatitude_focus_in is not None else 0.0
 
     if not (-180 <= dLongitude_focus <= 180):
-        logger.warning(f"Longitude focus {dLongitude_focus} out of range [-180, 180], clamping")
+        logger.warning(
+            f"Longitude focus {dLongitude_focus} out of range [-180, 180], clamping"
+        )
         dLongitude_focus = np.clip(dLongitude_focus, -180, 180)
 
     if not (-90 <= dLatitude_focus <= 90):
-        logger.warning(f"Latitude focus {dLatitude_focus} out of range [-90, 90], clamping")
+        logger.warning(
+            f"Latitude focus {dLatitude_focus} out of range [-90, 90], clamping"
+        )
         dLatitude_focus = np.clip(dLatitude_focus, -90, 90)
 
     # Validate zoom factor
@@ -115,7 +121,10 @@ def animate_polyline_file_on_sphere(
 
     # Validate output file path if provided
     if sFilename_animation_out is not None:
-        if not isinstance(sFilename_animation_out, str) or not sFilename_animation_out.strip():
+        if (
+            not isinstance(sFilename_animation_out, str)
+            or not sFilename_animation_out.strip()
+        ):
             logger.error("Output filename must be a non-empty string")
             return False
 
@@ -210,7 +219,9 @@ def animate_polyline_file_on_sphere(
             all_lats_list = []
             polyline_count = 0
 
-            logger.info("Processing polylines for GeoVista multi-line batch visualization...")
+            logger.info(
+                "Processing polylines for GeoVista multi-line batch visualization..."
+            )
 
             for geom_idx, pGeometry in enumerate(aLineGeometries):
                 try:
@@ -226,7 +237,9 @@ def animate_polyline_file_on_sphere(
                     polyline_count += 1
 
                 except Exception as e:
-                    logger.warning(f"Error processing geometry at index {geom_idx}: {e}")
+                    logger.warning(
+                        f"Error processing geometry at index {geom_idx}: {e}"
+                    )
                     continue
 
             if polyline_count == 0:
@@ -249,7 +262,9 @@ def animate_polyline_file_on_sphere(
                         num_points = len(all_lons_list[i])
                         point_widths.extend([width] * num_points)
 
-                    combined_flow_field.point_data["line_width"] = np.array(point_widths)
+                    combined_flow_field.point_data["line_width"] = np.array(
+                        point_widths
+                    )
 
                     plotter.add_mesh(
                         combined_flow_field,
@@ -263,8 +278,12 @@ def animate_polyline_file_on_sphere(
                     )
 
                 except Exception as width_error:
-                    logger.warning(f"Variable width with combined mesh failed: {width_error}")
-                    logger.info("Falling back to individual mesh processing for variable widths...")
+                    logger.warning(
+                        f"Variable width with combined mesh failed: {width_error}"
+                    )
+                    logger.info(
+                        "Falling back to individual mesh processing for variable widths..."
+                    )
 
                     # Fallback: Individual processing for variable line widths
                     polyline_count = 0
@@ -289,11 +308,15 @@ def animate_polyline_file_on_sphere(
                             polyline_count += 1
 
                         except Exception as e:
-                            logger.warning(f"Error processing geometry at index {geom_idx}: {e}")
+                            logger.warning(
+                                f"Error processing geometry at index {geom_idx}: {e}"
+                            )
                             continue
 
                     if polyline_count == 0:
-                        logger.error("No valid polylines could be processed for visualization")
+                        logger.error(
+                            "No valid polylines could be processed for visualization"
+                        )
                         return False
 
                     logger.info(
@@ -312,14 +335,20 @@ def animate_polyline_file_on_sphere(
                 )
 
         except Exception as e:
-            logger.error(f"GeoVista multi-line failed, trying PyVista batch method: {e}")
+            logger.error(
+                f"GeoVista multi-line failed, trying PyVista batch method: {e}"
+            )
 
             # Method 2: Combine all polylines into a single PyVista PolyData object
             try:
                 logger.info("Processing polylines for PyVista batch visualization...")
-                polydata = geometries_to_polydata(aLineGeometries, radius=1.0, verbose=False)
+                polydata = geometries_to_polydata(
+                    aLineGeometries, radius=1.0, verbose=False
+                )
                 if polydata is None or polydata.n_cells == 0:
-                    logger.error("No valid polylines could be processed for visualization")
+                    logger.error(
+                        "No valid polylines could be processed for visualization"
+                    )
                     return False
 
                 # Add the combined mesh to plotter - single operation instead of loop
@@ -365,11 +394,15 @@ def animate_polyline_file_on_sphere(
                         polyline_count += 1
 
                     except Exception as e:
-                        logger.warning(f"Error processing geometry at index {geom_idx}: {e}")
+                        logger.warning(
+                            f"Error processing geometry at index {geom_idx}: {e}"
+                        )
                         continue
 
                 if polyline_count == 0:
-                    logger.error("No valid polylines could be processed for visualization")
+                    logger.error(
+                        "No valid polylines could be processed for visualization"
+                    )
                     return False
 
                 logger.info(
@@ -402,7 +435,9 @@ def animate_polyline_file_on_sphere(
             plotter.camera.position = camera_position
             plotter.camera.zoom(dZoom_factor)
 
-            logger.debug(f"Camera configured: focal={focal_point}, position={camera_position}")
+            logger.debug(
+                f"Camera configured: focal={focal_point}, position={camera_position}"
+            )
         except Exception as e:
             logger.warning(f"Error setting camera position: {e}. Using default view.")
 
@@ -481,7 +516,9 @@ def animate_polyline_file_on_sphere(
                 return True
             except Exception as e:
                 logger.error(f"Failed to display interactive visualization: {e}")
-                logger.error(f"Ensure display environment is available (X11, Wayland, etc.)")
+                logger.error(
+                    f"Ensure display environment is available (X11, Wayland, etc.)"
+                )
                 logger.error(f"Traceback: {traceback.format_exc()}")
                 plotter.close()
                 return False
@@ -540,7 +577,9 @@ def _create_rotation_animation(
                 logger.warning("FFmpeg backend not available. MP4 creation may fail.")
                 logger.warning("Install with: pip install imageio[ffmpeg]")
         except ImportError as e:
-            logger.error("ImageIO library not available. Install with: pip install imageio[ffmpeg]")
+            logger.error(
+                "ImageIO library not available. Install with: pip install imageio[ffmpeg]"
+            )
             logger.error(f"Import error: {e}")
             return False
         import math
@@ -552,9 +591,13 @@ def _create_rotation_animation(
         # Ensure proper animation speed calculation
         if dAnimation_speed <= 0 or dAnimation_speed is None:
             dAnimation_speed = 360.0 / iAnimation_frames
-            logger.info(f"Auto-calculated animation speed: {dAnimation_speed:.2f}° per frame")
+            logger.info(
+                f"Auto-calculated animation speed: {dAnimation_speed:.2f}° per frame"
+            )
         else:
-            logger.info(f"Using provided animation speed: {dAnimation_speed:.2f}° per frame")
+            logger.info(
+                f"Using provided animation speed: {dAnimation_speed:.2f}° per frame"
+            )
         # Validate output format and check backend availability
         valid_formats = ["mp4", "gif", "avi"]
         original_format = sAnimation_format.lower()
@@ -569,15 +612,21 @@ def _create_rotation_animation(
                 os.remove(sFilename_out)
                 logger.info(f"Deleted existing animation file: {sFilename_out}")
             except Exception as e:
-                logger.error(f"Cannot delete existing animation file {sFilename_out}: {e}")
+                logger.error(
+                    f"Cannot delete existing animation file {sFilename_out}: {e}"
+                )
                 return False
         # Prepare output filename
         base_name = os.path.splitext(sFilename_out)[0]
         animation_filename = f"{base_name}.{sAnimation_format.lower()}"
         if sAnimation_format != original_format:
-            logger.info(f"Output format changed from {original_format} to {sAnimation_format}")
+            logger.info(
+                f"Output format changed from {original_format} to {sAnimation_format}"
+            )
         # Use PyVista's built-in movie functionality - no temporary files needed
-        logger.info(f"Creating {iAnimation_frames} frames for 360° rotation animation...")
+        logger.info(
+            f"Creating {iAnimation_frames} frames for 360° rotation animation..."
+        )
         logger.info(f"Animation will be saved as: {animation_filename}")
         # Use PyVista's built-in movie functionality
         logger.info("Creating animation using PyVista movie writer...")
@@ -653,8 +702,8 @@ def _create_rotation_animation(
             # Try to close movie file if it was opened
             try:
                 plotter.close_movie()
-            except:
-                pass
+            except Exception as close_err:
+                logger.debug(f"Error closing movie: {close_err}")
             return False
         finally:
             # Final cleanup to prevent memory leaks
@@ -672,5 +721,5 @@ def _create_rotation_animation(
             import gc
 
             gc.collect()
-        except:
+        except Exception as cleanup_err:
             pass

@@ -6,8 +6,8 @@ This tests the import structure to ensure no circular dependencies or missing ex
 
 import os
 import sys
-from pathlib import Path
 import traceback
+from pathlib import Path
 
 # Ensure the current workspace root is at the front of sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -40,12 +40,15 @@ def main():
     results.append(test_import("import pyearthviz3d", "Main package import"))
 
     # Test 2: Import geovista submodule
-    results.append(test_import("import pyearthviz3d.geovista", "GeoVista submodule import"))
+    results.append(
+        test_import("import pyearthviz3d.geovista", "GeoVista submodule import")
+    )
 
     # Test 3: Import individual functions from geovista submodule
     results.append(
         test_import(
-            "from pyearthviz3d.geovista import map_single_frame", "map_single_frame function"
+            "from pyearthviz3d.geovista import map_single_frame",
+            "map_single_frame function",
         )
     )
 
@@ -72,7 +75,10 @@ def main():
 
     # Test 4: Import from top-level package (convenience imports)
     results.append(
-        test_import("from pyearthviz3d import map_single_frame", "map_single_frame from top-level")
+        test_import(
+            "from pyearthviz3d import map_single_frame",
+            "map_single_frame from top-level",
+        )
     )
 
     results.append(

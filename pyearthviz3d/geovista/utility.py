@@ -8,9 +8,6 @@ import logging
 
 from ._camera import CameraController, configure_camera, configure_camera_enhanced
 from ._config import (
-    AnimationConfig,
-    AnimationResult,
-    CameraPosition,
     COORDINATE_BOUNDS,
     CRS,
     DEFAULT_ANIMATION_FRAMES,
@@ -19,9 +16,12 @@ from ._config import (
     DEFAULT_EARTH_RADIUS,
     DEFAULT_FRAMERATE,
     DEFAULT_ZOOM_FACTOR,
-    ScalarBarConfig,
     VALID_ANIMATION_FORMATS,
     VALID_IMAGE_FORMATS,
+    AnimationConfig,
+    AnimationResult,
+    CameraPosition,
+    ScalarBarConfig,
     VisualizationConfig,
 )
 from ._environment import (

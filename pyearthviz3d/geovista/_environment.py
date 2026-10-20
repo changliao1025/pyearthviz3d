@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from ._config import VALID_ANIMATION_FORMATS, VALID_IMAGE_FORMATS
 
@@ -30,7 +30,9 @@ def is_running_in_notebook() -> bool:
                 from IPython import get_ipython
 
                 ipython = get_ipython()
-                in_notebook = ipython is not None and "IPKernelApp" in str(type(ipython))
+                in_notebook = ipython is not None and "IPKernelApp" in str(
+                    type(ipython)
+                )
             except (ImportError, AttributeError):
                 in_notebook = False
         return in_notebook
@@ -38,7 +40,9 @@ def is_running_in_notebook() -> bool:
         return False
 
 
-def validate_output_filename(filename: str, expected_formats: List[str] = None) -> Tuple[bool, str]:
+def validate_output_filename(
+    filename: str, expected_formats: Optional[List[str]] = None
+) -> Tuple[bool, str]:
     """
     Validate output filename and format.
 
@@ -153,7 +157,9 @@ def setup_xvfb_if_needed(force_xvfb: bool = False, verbose: bool = False) -> boo
         # check if it is in a notebook
         if is_running_in_notebook():
             if verbose:
-                logger.info("Running in a notebook, ensuring DISPLAY is set for notebook")
+                logger.info(
+                    "Running in a notebook, ensuring DISPLAY is set for notebook"
+                )
             # might need to set up the backend for notebook
             try:
                 pv.set_jupyter_backend("trame")  # this is for mybinder
@@ -204,7 +210,9 @@ def get_system_info() -> Dict[str, Any]:
         import vtk
 
         info["vtk_available"] = True
-        info["vtk_version"] = getattr(vtk, "vtkVersion", lambda: vtk.VTK_VERSION)().GetVTKVersion()
+        info["vtk_version"] = getattr(
+            vtk, "vtkVersion", lambda: vtk.VTK_VERSION
+        )().GetVTKVersion()
     except ImportError:
         pass
 

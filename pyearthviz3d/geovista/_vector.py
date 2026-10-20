@@ -137,7 +137,9 @@ def load_vector_geometries(
 
         feature_count = layer.GetFeatureCount()
         if verbose:
-            logger.info(f"Loading {feature_count} features from {os.path.basename(filename)}")
+            logger.info(
+                f"Loading {feature_count} features from {os.path.basename(filename)}"
+            )
 
         spatial_ref = layer.GetSpatialRef()
         wgs84_srs = osr.SpatialReference()
@@ -180,7 +182,9 @@ def load_vector_geometries(
                             linewidth_values.append(default_linewidth)
                     except Exception as e:
                         if verbose:
-                            logger.warning(f"Could not read attribute {linewidth_attribute}: {e}")
+                            logger.warning(
+                                f"Could not read attribute {linewidth_attribute}: {e}"
+                            )
                         linewidth_values.append(default_linewidth)
                 else:
                     linewidth_values.append(default_linewidth)

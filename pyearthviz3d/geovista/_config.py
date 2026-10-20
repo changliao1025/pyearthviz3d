@@ -107,7 +107,9 @@ class VisualizationConfig:
         self.use_xvfb = use_xvfb  # None=auto-detect, True=force use, False=don't use
         self.force_xvfb = force_xvfb
         # Opacity controls (0.0 transparent .. 1.0 opaque)
-        self.base_layer_opacity = self._validate_opacity(base_layer_opacity, "base_layer")
+        self.base_layer_opacity = self._validate_opacity(
+            base_layer_opacity, "base_layer"
+        )
         self.mesh_opacity = self._validate_opacity(mesh_opacity, "mesh")
 
     def _validate_opacity(self, value: float, name: str) -> float:
@@ -126,20 +128,22 @@ class VisualizationConfig:
         """Validate and clamp longitude to valid range."""
         if not (-180 <= lon <= 180):
             logger.warning(f"Longitude {lon} out of range [-180, 180], clamping")
-            return np.clip(lon, -180, 180)
+            return float(np.clip(lon, -180, 180))
         return lon
 
     def _validate_latitude(self, lat: float) -> float:
         """Validate and clamp latitude to valid range."""
         if not (-90 <= lat <= 90):
             logger.warning(f"Latitude {lat} out of range [-90, 90], clamping")
-            return np.clip(lat, -90, 90)
+            return float(np.clip(lat, -90, 90))
         return lat
 
     def _validate_zoom_factor(self, zoom: float) -> float:
         """Validate zoom factor."""
         if zoom <= 0:
-            logger.warning(f"Invalid zoom factor {zoom}, using default {DEFAULT_ZOOM_FACTOR}")
+            logger.warning(
+                f"Invalid zoom factor {zoom}, using default {DEFAULT_ZOOM_FACTOR}"
+            )
             return DEFAULT_ZOOM_FACTOR
         return zoom
 
@@ -183,10 +187,10 @@ class ScalarBarConfig:
         n_labels: int = 5,
         shadow: bool = True,
         orientation: str = "horizontal",
-        position_x: float = None,
-        position_y: float = None,
-        width: float = None,
-        height: float = None,
+        position_x: Optional[float] = None,
+        position_y: Optional[float] = None,
+        width: Optional[float] = None,
+        height: Optional[float] = None,
         discrete_labels: Optional[Dict] = None,
         value_colors: Optional[Dict] = None,
     ):
@@ -205,8 +209,10 @@ class ScalarBarConfig:
         self.orientation = self._validate_orientation(orientation)
 
         # Set default positions based on orientation
-        self.position_x, self.position_y, self.width, self.height = self._set_default_dimensions(
-            position_x, position_y, width, height, self.orientation
+        self.position_x, self.position_y, self.width, self.height = (
+            self._set_default_dimensions(
+                position_x, position_y, width, height, self.orientation
+            )
         )
 
     def _validate_orientation(self, orientation: str) -> str:
@@ -252,7 +258,9 @@ class ScalarBarConfig:
             position_y if position_y is not None else default_position_y, 0.0, 1.0
         )
         final_width = np.clip(width if width is not None else default_width, 0.01, 0.5)
-        final_height = np.clip(height if height is not None else default_height, 0.01, 1.0)
+        final_height = np.clip(
+            height if height is not None else default_height, 0.01, 1.0
+        )
 
         return final_position_x, final_position_y, final_width, final_height
 
@@ -309,10 +317,14 @@ class AnimationConfig:
 
         # Handle legacy parameters
         if dLongitude_start is not None:
-            logger.warning("Parameter 'dLongitude_start' is deprecated, use 'longitude_start'")
+            logger.warning(
+                "Parameter 'dLongitude_start' is deprecated, use 'longitude_start'"
+            )
             longitude_start = dLongitude_start
         if dLatitude_start is not None:
-            logger.warning("Parameter 'dLatitude_start' is deprecated, use 'latitude_start'")
+            logger.warning(
+                "Parameter 'dLatitude_start' is deprecated, use 'latitude_start'"
+            )
             latitude_start = dLatitude_start
 
         # Validate and set frames
@@ -375,7 +387,9 @@ class AnimationConfig:
                 return min(max_val, default)
             return int_val
         except (ValueError, TypeError):
-            logger.warning(f"Invalid {param_name} value {value}, using default {default}")
+            logger.warning(
+                f"Invalid {param_name} value {value}, using default {default}"
+            )
             return default
 
     def _validate_float_parameter(
@@ -401,7 +415,9 @@ class AnimationConfig:
                 return min(max_val, default)
             return float_val
         except (ValueError, TypeError):
-            logger.warning(f"Invalid {param_name} value {value}, using default {default}")
+            logger.warning(
+                f"Invalid {param_name} value {value}, using default {default}"
+            )
             return default
 
     def _validate_coordinate(self, coord: float, coord_type: str) -> float:
@@ -409,7 +425,7 @@ class AnimationConfig:
         bounds = COORDINATE_BOUNDS.get(coord_type, (-180, 180))
         if not (bounds[0] <= coord <= bounds[1]):
             logger.warning(f"{coord_type} {coord} out of range {bounds}, clamping")
-            return np.clip(coord, bounds[0], bounds[1])
+            return float(np.clip(coord, bounds[0], bounds[1]))
         return coord
 
     @property
@@ -472,7 +488,9 @@ class AnimationResult:
 
         if self.layer_info:
             if "mesh" in self.layer_info:
-                lines.append(f"???  Mesh: {self.layer_info['mesh'].get('cells', 0)} cells")
+                lines.append(
+                    f"???  Mesh: {self.layer_info['mesh'].get('cells', 0)} cells"
+                )
             if "vectors" in self.layer_info:
                 n_layers = len(self.layer_info["vectors"])
                 lines.append(f"?? Vector layers: {n_layers}")
@@ -482,7 +500,9 @@ class AnimationResult:
                     lines.append(f"   {i}. {name}: {features} features")
 
         if self.animation_info:
-            frames = self.animation_info.get("total_frames", self.animation_info.get("frames", 0))
+            frames = self.animation_info.get(
+                "total_frames", self.animation_info.get("frames", 0)
+            )
             duration = self.animation_info.get("duration", 0)
             framerate = self.animation_info.get("framerate", 0)
             if frames > 0:

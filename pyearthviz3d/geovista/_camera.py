@@ -3,14 +3,14 @@
 import logging
 import math
 from functools import lru_cache
-from typing import List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from ._config import (
-    AnimationConfig,
-    CameraPosition,
     DEFAULT_CAMERA_DISTANCE_MULTIPLIER,
     DEFAULT_EARTH_RADIUS,
     DEFAULT_ZOOM_FACTOR,
+    AnimationConfig,
+    CameraPosition,
     VisualizationConfig,
 )
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class CameraController:
     """Enhanced camera positioning and movement calculations."""
 
-    _position_cache = {}  # Cache for frequently used positions
+    _position_cache: Dict[Any, Any] = {}  # Cache for frequently used positions
 
     @staticmethod
     @lru_cache(maxsize=128)
@@ -55,7 +55,9 @@ class CameraController:
 
         # Calculate positions
         earth_radius = DEFAULT_EARTH_RADIUS
-        camera_distance = earth_radius * DEFAULT_CAMERA_DISTANCE_MULTIPLIER / zoom_factor
+        camera_distance = (
+            earth_radius * DEFAULT_CAMERA_DISTANCE_MULTIPLIER / zoom_factor
+        )
 
         # Focal point on Earth surface
         x_focal = earth_radius * math.cos(lat_rad) * math.cos(lon_rad)
@@ -96,8 +98,13 @@ class CameraController:
 
         # Enhanced latitude movement: sine-wave oscillation for dynamic viewing
         frames_div = float(config.frames) if config.frames > 0 else 1.0
-        theta = 2.0 * math.pi * (float(frame_idx) / frames_div) * config.cycles + config.phase
-        latitude_current = float(config.latitude_start) + config.amplitude_deg * math.sin(theta)
+        theta = (
+            2.0 * math.pi * (float(frame_idx) / frames_div) * config.cycles
+            + config.phase
+        )
+        latitude_current = float(
+            config.latitude_start
+        ) + config.amplitude_deg * math.sin(theta)
 
         # Clamp latitude to avoid pole singularities
         latitude_current = max(-89.9, min(89.9, latitude_current))
@@ -144,7 +151,9 @@ class CameraController:
             if len(focal_point) != 3 or len(camera_position) != 3:
                 return False
 
-            distance = math.sqrt(sum((c - f) ** 2 for c, f in zip(camera_position, focal_point)))
+            distance = math.sqrt(
+                sum((c - f) ** 2 for c, f in zip(camera_position, focal_point))
+            )
             return distance >= 0.1  # Minimum distance threshold
         except Exception:
             return False
@@ -250,9 +259,13 @@ def configure_camera_enhanced(
                     logger.debug(f"  Camera position: {camera_pos.camera_position}")
                 return success
             else:
-                logger.warning("Enhanced camera validation failed, trying legacy method")
+                logger.warning(
+                    "Enhanced camera validation failed, trying legacy method"
+                )
         except Exception as e:
-            logger.warning(f"Enhanced camera configuration failed: {e}, trying legacy method")
+            logger.warning(
+                f"Enhanced camera configuration failed: {e}, trying legacy method"
+            )
 
     # Legacy/fallback camera configuration
     try:
@@ -288,7 +301,9 @@ def configure_camera_enhanced(
         return True
 
     except Exception as e:
-        logger.error(f"All camera configuration methods failed: {e}. Using default view.")
+        logger.error(
+            f"All camera configuration methods failed: {e}. Using default view."
+        )
         try:
             plotter.reset_camera()
             return True  # Default view is still usable

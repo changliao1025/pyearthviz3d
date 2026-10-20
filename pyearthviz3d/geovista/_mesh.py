@@ -119,7 +119,9 @@ def add_mesh_to_plotter(
             # Get scalar information
             scalar_info = MeshHandler.get_scalar_info(mesh_valid, scalar_name)
             if not scalar_info["exists"]:
-                logger.warning(f"Scalar '{scalar_name}' not found in mesh, adding without scalars")
+                logger.warning(
+                    f"Scalar '{scalar_name}' not found in mesh, adding without scalars"
+                )
                 plotter.add_mesh(mesh_valid)
                 return True
 
@@ -135,22 +137,28 @@ def add_mesh_to_plotter(
 
             if discrete_labels is not None and value_colors is not None:
                 # Create custom colormap for discrete values
-                from matplotlib.colors import ListedColormap, BoundaryNorm
+                from matplotlib.colors import BoundaryNorm, ListedColormap
 
                 # Get actual unique values present in the mesh data
                 mesh_data_values = mesh_valid[scalar_name]
-                actual_unique_values = np.unique(mesh_data_values[np.isfinite(mesh_data_values)])
+                actual_unique_values = np.unique(
+                    mesh_data_values[np.isfinite(mesh_data_values)]
+                )
 
                 # Special treatment for missing data: convert negative values to 0
                 actual_unique_values[actual_unique_values <= 0] = 0
 
                 # Get unique values after conversion and convert to int list
-                actual_unique_values = np.unique(actual_unique_values)  # Re-unique after conversion
+                actual_unique_values = np.unique(
+                    actual_unique_values
+                )  # Re-unique after conversion
                 actual_unique_values = [int(v) for v in actual_unique_values]
 
                 # Filter to only include values that are in the provided discrete_labels
                 # and actually present in the data
-                unique_values = sorted([v for v in actual_unique_values if v in discrete_labels])
+                unique_values = sorted(
+                    [v for v in actual_unique_values if v in discrete_labels]
+                )
 
                 if len(unique_values) == 0:
                     # Fall back to all provided labels if no match found
@@ -179,11 +187,13 @@ def add_mesh_to_plotter(
                 mesh_valid[f"{scalar_name}_remapped"] = remapped_scalars
 
                 # Create discrete colormap for PyVista
-                from matplotlib.colors import to_rgb, ListedColormap
                 import matplotlib.pyplot as plt
+                from matplotlib.colors import ListedColormap, to_rgb
 
                 # Create color list from value_colors dictionary in correct order
-                colors_rgb = [to_rgb(value_colors.get(val, "#FFFFFF")) for val in unique_values]
+                colors_rgb = [
+                    to_rgb(value_colors.get(val, "#FFFFFF")) for val in unique_values
+                ]
 
                 # Create discrete colormap with N=n_categories
                 # Use a unique name for this specific colormap
@@ -193,13 +203,15 @@ def add_mesh_to_plotter(
                 # Register the colormap with matplotlib
                 try:
                     plt.cm.unregister_cmap(cmap_name)
-                except:
+                except Exception:
                     pass
                 plt.cm.register_cmap(cmap=cmap, name=cmap_name)
 
                 # Create annotations dictionary mapping sequential indices to labels
                 annotations = {
-                    idx: discrete_labels.get(unique_values[idx], str(unique_values[idx]))
+                    idx: discrete_labels.get(
+                        unique_values[idx], str(unique_values[idx])
+                    )
                     for idx in range(n_categories)
                 }
 
@@ -209,7 +221,9 @@ def add_mesh_to_plotter(
 
                 # Debug output
                 print(f"\n{'='*60}")
-                print(f"DEBUG: Creating discrete colorbar with {n_categories} categories")
+                print(
+                    f"DEBUG: Creating discrete colorbar with {n_categories} categories"
+                )
                 print(f"DEBUG: Unique values (sorted): {unique_values}")
                 print(f"DEBUG: Colormap name: {cmap_name}")
                 print(f"DEBUG: Color mapping:")
@@ -234,7 +248,10 @@ def add_mesh_to_plotter(
                     style=style,
                     categories=True,  # Treat scalars as categorical for discrete colorbar
                     scalar_bar_args=scalar_args,
-                    clim=(-0.5, n_categories - 0.5),  # Set clim to match the number of categories
+                    clim=(
+                        -0.5,
+                        n_categories - 0.5,
+                    ),  # Set clim to match the number of categories
                     cmap=cmap,  # Pass colormap object directly for categories=True
                     annotations=annotations,
                     opacity=opacity,

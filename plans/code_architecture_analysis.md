@@ -32,7 +32,7 @@ Both [`animate_polyline_file_on_sphere.py`](../pyearthviz3d/geovista/animate_pol
 
 ### 3. The public API differs between package levels
 
-**Status: Implemented.** 
+**Status: Implemented.**
 - Consolidated `AnimationResult` in [`_config.py`](../pyearthviz3d/geovista/_config.py) and re-exported it through [`utility.py`](../pyearthviz3d/geovista/utility.py), ensuring both [`animate_rotating_frames.py`](../pyearthviz3d/geovista/animate_rotating_frames.py) and [`animate_mesh_with_vector_files.py`](../pyearthviz3d/geovista/animate_mesh_with_vector_files.py) share the same comprehensive result class.
 - Synchronized top-level package exports in [`pyearthviz3d/__init__.py`](../pyearthviz3d/__init__.py) with [`geovista/__init__.py`](../pyearthviz3d/geovista/__init__.py), making `animate_mesh_with_vector_files`, `VectorLayerConfig`, and `AnimationResult` available directly at the top level and matching `__all__` across both levels.
 

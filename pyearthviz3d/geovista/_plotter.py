@@ -9,7 +9,9 @@ from ._environment import detect_headless_environment, setup_xvfb_if_needed
 logger = logging.getLogger(__name__)
 
 
-def setup_geovista_plotter(iFlag_off_screen: bool = False, iFlag_verbose_in: bool = False):
+def setup_geovista_plotter(
+    iFlag_off_screen: bool = False, iFlag_verbose_in: bool = False
+):
     """
     Legacy wrapper for backward compatibility.
 
@@ -113,7 +115,9 @@ class PlotterManager:
                 logger.info("Setting up Xvfb for headless environment...")
             xvfb_success = setup_xvfb_if_needed(force_xvfb=force_xvfb, verbose=verbose)
             if not xvfb_success:
-                logger.warning("Failed to setup xvfb, attempting to continue without it")
+                logger.warning(
+                    "Failed to setup xvfb, attempting to continue without it"
+                )
 
         try:
             import geovista as gv
@@ -121,7 +125,9 @@ class PlotterManager:
             if verbose:
                 logger.info("GeoVista library imported successfully")
         except ImportError as e:
-            logger.error("GeoVista library not available. Install with: pip install geovista")
+            logger.error(
+                "GeoVista library not available. Install with: pip install geovista"
+            )
             logger.error(f"Import error: {e}")
             return None
 
@@ -129,7 +135,9 @@ class PlotterManager:
         creation_strategies = [
             (
                 "standard",
-                lambda: PlotterManager._create_standard_plotter(gv, off_screen, window_size, theme),
+                lambda: PlotterManager._create_standard_plotter(
+                    gv, off_screen, window_size, theme
+                ),
             ),
             (
                 "fallback",
@@ -142,20 +150,26 @@ class PlotterManager:
             try:
                 plotter = create_func()
                 if verbose:
-                    logger.info(f"Successfully created plotter using {strategy_name} strategy")
+                    logger.info(
+                        f"Successfully created plotter using {strategy_name} strategy"
+                    )
                 return plotter
             except Exception as e:
                 if verbose:
-                    logger.warning(f"Failed to create plotter with {strategy_name} strategy: {e}")
+                    logger.warning(
+                        f"Failed to create plotter with {strategy_name} strategy: {e}"
+                    )
                 continue
 
         logger.error("All plotter creation strategies failed")
         return None
 
     @staticmethod
-    def _create_standard_plotter(gv, off_screen: bool, window_size: Tuple[int, int], theme: str):
+    def _create_standard_plotter(
+        gv, off_screen: bool, window_size: Tuple[int, int], theme: str
+    ):
         """Create plotter with standard configuration."""
-        kwargs = {"off_screen": off_screen}
+        kwargs: Dict[str, Any] = {"off_screen": off_screen}
         kwargs["window_size"] = window_size
         if theme != "default":
             kwargs["theme"] = theme

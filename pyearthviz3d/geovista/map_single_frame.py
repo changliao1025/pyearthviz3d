@@ -5,24 +5,18 @@ This module provides improved single-frame visualization capabilities with compr
 error handling, validation, and enhanced user experience.
 """
 
-import os
 import logging
+import os
 import traceback
-from typing import Optional, Dict, Any, Tuple, List, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
-from pyearthviz3d.geovista.utility import (
-    VisualizationConfig,
-    ScalarBarConfig,
-    PlotterManager,
-    MeshHandler,
-    configure_camera_enhanced,
-    add_geographic_context_enhanced,
-    add_mesh_to_plotter,
-    validate_output_filename,
-    get_system_info,
-    VALID_IMAGE_FORMATS,
-)
+from ._camera import configure_camera_enhanced
+from ._config import VALID_IMAGE_FORMATS, ScalarBarConfig, VisualizationConfig
+from ._environment import get_system_info, validate_output_filename
+from ._mesh import MeshHandler, add_mesh_to_plotter
+from ._plotter import PlotterManager, add_geographic_context_enhanced
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -179,6 +173,18 @@ def map_single_frame(
             force_xvfb=pConfig.force_xvfb,
         )
 
+        if plotter is None:
+            error_msg = "Failed to create GeoVista plotter"
+            logger.error(error_msg)
+            if retry_on_failure:
+                logger.info("Attempting plotter creation with fallback strategies...")
+                # Additional retry logic could be added here
+
+            result = SingleFrameResult(False, error_msg, system_info=get_system_info())
+            return result if return_detailed_result else False
+
+        result_info["plotter_created"] = True
+
         # Add base layer if specified (use actual_base_layer which respects backward compatibility)
         if actual_base_layer is not None:
             try:
@@ -194,20 +200,27 @@ def map_single_frame(
                     if texture_func and callable(texture_func):
                         plotter.add_base_layer(texture=texture_func())
                     else:
-                        logger.warning(f"Unknown base layer '{actual_base_layer}', using natural_earth_hypsometric")
+                        logger.warning(
+                            f"Unknown base layer '{actual_base_layer}', using natural_earth_hypsometric"
+                        )
                         plotter.add_base_layer(texture=gv.natural_earth_hypsometric())
 
                 if pConfig.verbose:
                     logger.info(f"🌍 Added base layer: {actual_base_layer}")
                 # Apply base layer opacity if requested
                 try:
-                    if hasattr(pConfig, "base_layer_opacity") and pConfig.base_layer_opacity < 1.0:
+                    if (
+                        hasattr(pConfig, "base_layer_opacity")
+                        and pConfig.base_layer_opacity < 1.0
+                    ):
                         # Attempt to set opacity on all renderer actors (best-effort)
                         renderer = getattr(plotter, "renderer", None)
                         if renderer is not None and hasattr(renderer, "actors"):
                             for _id, actor in list(renderer.actors.items()):
                                 try:
-                                    actor.GetProperty().SetOpacity(pConfig.base_layer_opacity)
+                                    actor.GetProperty().SetOpacity(
+                                        pConfig.base_layer_opacity
+                                    )
                                 except Exception:
                                     # best-effort: ignore actors that don't support opacity
                                     pass
@@ -223,18 +236,6 @@ def map_single_frame(
             if pConfig.verbose:
                 logger.info("🌍 No base layer specified - using empty globe")
 
-        if plotter is None:
-            error_msg = "Failed to create GeoVista plotter"
-            logger.error(error_msg)
-            if retry_on_failure:
-                logger.info("Attempting plotter creation with fallback strategies...")
-                # Additional retry logic could be added here
-
-            result = SingleFrameResult(False, error_msg, system_info=get_system_info())
-            return result if return_detailed_result else False
-
-        result_info["plotter_created"] = True
-
         # Add mesh to plotter using enhanced handler
         if pConfig.verbose:
             logger.info("📐 Adding mesh data to plotter...")
@@ -243,15 +244,20 @@ def map_single_frame(
         # user did not explicitly change mesh_opacity (left at default 1.0),
         # use a slightly reduced default so the base layer remains visible.
         effective_mesh_opacity = getattr(pConfig, "mesh_opacity", 1.0)
-        if pConfig.base_layer is not None and getattr(pConfig, "mesh_opacity", 1.0) == 1.0:
+        if (
+            pConfig.base_layer is not None
+            and getattr(pConfig, "mesh_opacity", 1.0) == 1.0
+        ):
             effective_mesh_opacity = 0.9
             if pConfig.verbose:
-                logger.info(f"Using reduced mesh opacity {effective_mesh_opacity} because base layer is present")
+                logger.info(
+                    f"Using reduced mesh opacity {effective_mesh_opacity} because base layer is present"
+                )
 
         mesh_success = add_mesh_to_plotter(
             plotter=plotter,
             mesh=pMesh,
-            style=style,
+            style=style or "surface",
             valid_indices=aValid_cell_indices,
             scalar_name=sScalar,
             scalar_config=scalar_config,

@@ -17,35 +17,30 @@ Date: 2026-05-15
 Version: 1.0.0
 """
 
-import os
 import logging
-import traceback
 import math
-from typing import Optional, List, Union, Dict, Any, Tuple
+import os
+import traceback
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
-from ._vector import (
-    load_vector_geometries,
-    geometries_to_polydata,
-    normalize_vector_inputs,
-)
-
-# Import from utility module
-from pyearthviz3d.geovista.utility import (
-    VisualizationConfig,
-    ScalarBarConfig,
+from ._camera import CameraController, configure_camera_enhanced
+from ._config import (
+    VALID_ANIMATION_FORMATS,
+    VALID_IMAGE_FORMATS,
     AnimationConfig,
     AnimationResult,
-    PlotterManager,
-    MeshHandler,
-    CameraController,
-    configure_camera_enhanced,
-    add_geographic_context_enhanced,
-    add_mesh_to_plotter,
-    validate_output_filename,
-    get_system_info,
-    VALID_IMAGE_FORMATS,
-    VALID_ANIMATION_FORMATS,
+    ScalarBarConfig,
+    VisualizationConfig,
+)
+from ._environment import get_system_info, validate_output_filename
+from ._mesh import MeshHandler, add_mesh_to_plotter
+from ._plotter import PlotterManager, add_geographic_context_enhanced
+from ._vector import (
+    geometries_to_polydata,
+    load_vector_geometries,
+    normalize_vector_inputs,
 )
 
 # Set up logging
@@ -96,7 +91,9 @@ class VectorLayerConfig:
 
     def __repr__(self):
         name = f"'{self.layer_name}'" if self.layer_name else "unnamed"
-        return f"VectorLayerConfig({name}, color={self.color}, linewidth={self.linewidth})"
+        return (
+            f"VectorLayerConfig({name}, color={self.color}, linewidth={self.linewidth})"
+        )
 
 
 # AnimationResult is imported from pyearthviz3d.geovista.utility
@@ -183,7 +180,7 @@ def _add_multiple_vector_layers(
     Returns:
         Dictionary with layer information
     """
-    layer_info = {"vectors": []}
+    layer_info: Dict[str, Any] = {"vectors": []}
 
     # Sort by z_order for proper rendering
     sorted_items = sorted(zip(file_paths, configs), key=lambda x: x[1].z_order)
@@ -194,7 +191,9 @@ def _add_multiple_vector_layers(
             geometries, linewidths, info = _load_vector_data(file_path, config, verbose)
 
             # Add to plotter
-            success = _add_vector_layer(plotter, geometries, linewidths, config, verbose)
+            success = _add_vector_layer(
+                plotter, geometries, linewidths, config, verbose
+            )
 
             if success:
                 layer_info["vectors"].append(info)
@@ -257,7 +256,9 @@ def _create_animation_frames(
             # Progress reporting
             if verbose and (i + 1) % max(1, animation_config.frames // 10) == 0:
                 progress_pct = (i + 1) / animation_config.frames * 100
-                logger.info(f"  Frame {i+1}/{animation_config.frames} ({progress_pct:.1f}%)")
+                logger.info(
+                    f"  Frame {i+1}/{animation_config.frames} ({progress_pct:.1f}%)"
+                )
 
         # Close movie file
         plotter.close_movie()
@@ -272,7 +273,7 @@ def _create_animation_frames(
         logger.error(f"Traceback: {traceback.format_exc()}")
         try:
             plotter.close_movie()
-        except:
+        except Exception:
             pass
         return False
 
@@ -345,7 +346,9 @@ def animate_mesh_with_vector_files(
 
     try:
         # Normalize vector inputs
-        vector_files, vector_configs = _normalize_vector_inputs(aFilename_vector_in, aVector_config)
+        vector_files, vector_configs = _normalize_vector_inputs(
+            aFilename_vector_in, aVector_config
+        )
 
         # Validate inputs
         if pMesh is None and len(vector_files) == 0:

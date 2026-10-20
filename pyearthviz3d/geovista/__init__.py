@@ -16,15 +16,15 @@ Classes:
     AnimationResult: Result object for animation operations
 """
 
-from .map_single_frame import map_single_frame
+from .animate_mesh_with_vector_files import (
+    AnimationResult,
+    VectorLayerConfig,
+    animate_mesh_with_vector_files,
+)
 from .animate_polyline_file_on_sphere import animate_polyline_file_on_sphere
 from .animate_rotating_frames import animate_rotating_frames
 from .animate_time_series_frames import animate_time_series_frames
-from .animate_mesh_with_vector_files import (
-    animate_mesh_with_vector_files,
-    VectorLayerConfig,
-    AnimationResult,
-)
+from .map_single_frame import map_single_frame
 
 __all__ = [
     "map_single_frame",

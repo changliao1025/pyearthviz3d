@@ -37,6 +37,7 @@ extensions = [
 # Optional copybutton if installed
 try:
     import sphinx_copybutton  # noqa: F401
+
     extensions.append("sphinx_copybutton")
 except ImportError:
     pass

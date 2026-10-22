@@ -1,3 +1,5 @@
+exclude: '^notebooks/|\.ipynb$'
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -43,7 +45,7 @@ repos:
     hooks:
       - id: codespell
         args: [--write-changes, "--ignore-words-list=aline,pring,afile,hav"]
-        exclude: ^(.*\.geojson|.*\.tif|.*\.tiff)$
+        exclude: ^(.*\.geojson|.*\.tif|.*\.tiff|.*\.ipynb)$
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.22.0

@@ -1,0 +1,6 @@
+# Documentation build requirements for ReadTheDocs and local builds
+sphinx>=5.0.0
+sphinx-rtd-theme>=1.0.0
+myst-parser>=0.18.0
+sphinx-copybutton>=0.5.0
+numpy

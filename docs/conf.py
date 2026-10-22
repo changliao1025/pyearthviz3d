@@ -5,22 +5,69 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
+import re
 import sys
 from datetime import datetime
+from unittest.mock import MagicMock
 
 # -- Path setup --------------------------------------------------------------
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here.
 sys.path.insert(0, os.path.abspath(".."))
 
-import pyearthviz3d  # noqa: E402
+# Mock heavy binary / GUI / C-extension modules early in sys.modules so imports
+# and Sphinx doc building succeed cleanly in any environment (including ReadTheDocs
+# which does not have system libgdal-dev or OpenGL/VTK binaries).
+MOCK_MODULES = [
+    "osgeo",
+    "osgeo.gdal",
+    "osgeo.ogr",
+    "osgeo.osr",
+    "gdal",
+    "ogr",
+    "osr",
+    "geovista",
+    "geovista.geodesic",
+    "geovista.theme",
+    "pyvista",
+    "pyvista.core",
+    "pyvista.core.dataset",
+    "vtk",
+    "trame",
+    "trame.widgets",
+    "trame.widgets.html",
+    "trame_vtk",
+    "trame_vtk.modules",
+    "trame_vtk.modules.vtk",
+    "trame_vtk.modules.vtk.protocols",
+    "trame_vtk.modules.vtk.protocols.mouse_handler",
+    "trame_vuetify",
+    "imageio",
+]
+for mod_name in MOCK_MODULES:
+    if mod_name not in sys.modules:
+        sys.modules[mod_name] = MagicMock()
+
+
+def get_version() -> str:
+    """Safely extract __version__ from pyearthviz3d/__init__.py without side effects."""
+    init_path = os.path.join(os.path.abspath(".."), "pyearthviz3d", "__init__.py")
+    try:
+        with open(init_path, "r", encoding="utf-8") as f:
+            match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', f.read(), re.M)
+            if match:
+                return match.group(1)
+    except Exception:
+        pass
+    return "0.1.2"
+
 
 # -- Project information -----------------------------------------------------
 project = "pyearthviz3d"
 author = "Chang Liao"
 current_year = datetime.now().year
 copyright = f"2022-{current_year}, Battelle Memorial Institute and Chang Liao"
-release = pyearthviz3d.__version__
+release = get_version()
 version = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
@@ -42,20 +89,8 @@ try:
 except ImportError:
     pass
 
-# Mock heavy binary / GUI / C-extension modules so autodoc builds cleanly in any environment
-autodoc_mock_imports = [
-    "osgeo",
-    "gdal",
-    "ogr",
-    "osr",
-    "geovista",
-    "pyvista",
-    "vtk",
-    "trame",
-    "trame_vtk",
-    "trame_vuetify",
-    "imageio",
-]
+# Mock list for Sphinx autodoc
+autodoc_mock_imports = MOCK_MODULES
 
 # Source suffix configuration
 source_suffix = {

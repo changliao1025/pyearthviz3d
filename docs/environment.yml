@@ -1,0 +1,18 @@
+name: pyearthviz3d-docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.10
+  - numpy
+  - gdal>=3.0
+  - pyvista
+  - geovista
+  - sphinx>=5.0.0
+  - sphinx_rtd_theme>=1.0.0
+  - myst-parser>=0.18.0
+  - sphinx-copybutton>=0.5.0
+  - pip
+  - pip:
+      - pyearth>=0.2.4
+      - --no-deps -e .

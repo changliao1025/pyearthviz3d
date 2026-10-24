@@ -53,13 +53,13 @@ def get_version() -> str:
     """Safely extract __version__ from pyearthviz3d/__init__.py without side effects."""
     init_path = os.path.join(os.path.abspath(".."), "pyearthviz3d", "__init__.py")
     try:
-        with open(init_path, "r", encoding="utf-8") as f:
+        with open(init_path, encoding="utf-8") as f:
             match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', f.read(), re.M)
             if match:
                 return match.group(1)
     except Exception:
         pass
-    return "0.1.2"
+    return "0.1.3"
 
 
 # -- Project information -----------------------------------------------------

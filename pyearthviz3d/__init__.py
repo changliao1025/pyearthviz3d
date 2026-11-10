@@ -19,7 +19,7 @@ Example:
     ... )
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = "Chang Liao"
 __email__ = "changliao.climate@gmail.com"
 __url__ = "https://github.com/changliao1025/pyearthviz3d"

@@ -298,6 +298,11 @@ def animate_mesh_with_vector_files(
     scalar_config=None,
     validate_inputs=True,
     return_detailed_result=False,
+    show_edges: bool = False,
+    edge_color: str = "black",
+    line_width: float = 1.0,
+    color: Optional[str] = None,
+    **kwargs,
 ) -> Union[bool, AnimationResult]:
     """
     Create animated visualization combining mesh data and multiple vector file overlays.
@@ -415,18 +420,26 @@ def animate_mesh_with_vector_files(
             if verbose:
                 logger.info("📐 Adding mesh data to plotter...")
 
+            mesh_color = (
+                color
+                if color is not None
+                else (edge_color if (style == "wireframe") else pConfig.color)
+            )
             mesh_success = add_mesh_to_plotter(
                 plotter=plotter,
                 mesh=pMesh,
-                style=style,
+                style=style or "surface",
                 valid_indices=aValid_cell_indices,
                 scalar_name=sScalar,
                 scalar_config=scalar_config,
                 colormap=pConfig.colormap,
-                color=pConfig.color,
+                color=mesh_color,
                 unit=sUnit or "",
                 validate_data=validate_inputs,
                 opacity=getattr(pConfig, "mesh_opacity", 1.0),
+                show_edges=show_edges,
+                edge_color=edge_color,
+                line_width=line_width,
             )
 
             if mesh_success:

@@ -11,7 +11,8 @@ dependencies:
   - gdal>=3.0
   - pyvista
   - geovista
-  - pyearth>=0.2.4
+  - pyearth>=0.2.3
+  - imageio
 
   # Development dependencies (optional-dependencies.dev from pyproject.toml)
   - pytest>=7.0.0

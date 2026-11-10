@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Tuple, Union
 from ._config import (
     DEFAULT_CAMERA_DISTANCE_MULTIPLIER,
     DEFAULT_EARTH_RADIUS,
-    DEFAULT_ZOOM_FACTOR,
     AnimationConfig,
     CameraPosition,
     VisualizationConfig,
@@ -24,16 +23,13 @@ class CameraController:
 
     @staticmethod
     @lru_cache(maxsize=128)
-    def calculate_camera_position(
-        longitude: float, latitude: float, zoom_factor: float = DEFAULT_ZOOM_FACTOR
-    ) -> CameraPosition:
+    def calculate_camera_position(longitude: float, latitude: float) -> CameraPosition:
         """
         Calculate camera position and focal point from geographic coordinates with caching.
 
         Args:
             longitude: Longitude in degrees [-180, 180]
             latitude: Latitude in degrees [-90, 90]
-            zoom_factor: Camera zoom level (positive float)
 
         Returns:
             CameraPosition: Named tuple containing focal_point and camera_position as tuples
@@ -46,18 +42,14 @@ class CameraController:
             raise ValueError(f"Longitude {longitude} must be in range [-180, 180]")
         if not (-90 <= latitude <= 90):
             raise ValueError(f"Latitude {latitude} must be in range [-90, 90]")
-        if zoom_factor <= 0:
-            raise ValueError(f"Zoom factor {zoom_factor} must be positive")
 
         # Convert to radians
         lon_rad = math.radians(longitude)
         lat_rad = math.radians(latitude)
 
-        # Calculate positions
+        # Calculate positions at standard distance; zoom is applied via plotter.camera.zoom
         earth_radius = DEFAULT_EARTH_RADIUS
-        camera_distance = (
-            earth_radius * DEFAULT_CAMERA_DISTANCE_MULTIPLIER / zoom_factor
-        )
+        camera_distance = earth_radius * DEFAULT_CAMERA_DISTANCE_MULTIPLIER
 
         # Focal point on Earth surface
         x_focal = earth_radius * math.cos(lat_rad) * math.cos(lon_rad)
@@ -198,7 +190,7 @@ def configure_camera(pPlotter, pConfig: VisualizationConfig) -> bool:
     """
     try:
         aFocal_point, aCamera_position = CameraController.calculate_camera_position(
-            pConfig.longitude_focus, pConfig.latitude_focus, pConfig.zoom_factor
+            pConfig.longitude_focus, pConfig.latitude_focus
         )
 
         # Validate camera setup
@@ -244,7 +236,7 @@ def configure_camera_enhanced(
     if use_enhanced_controller:
         try:
             camera_pos = CameraController.calculate_camera_position(
-                config.longitude_focus, config.latitude_focus, config.zoom_factor
+                config.longitude_focus, config.latitude_focus
             )
 
             if CameraController.validate_camera_setup(

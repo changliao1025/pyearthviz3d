@@ -82,7 +82,7 @@ python -m build
 conda install numpy gdal geovista pyvista
 
 # Install pyearth (required dependency)
-pip install pyearth>=0.2.2
+pip install pyearth>=0.2.3
 
 # Build and install
 pip install -e .
@@ -124,4 +124,4 @@ Copyright © 2022, Battelle Memorial Institute
 
 If you make use of `PyEarthViz3D` in your work, please consider including a reference to the following:
 
-* Chang Liao. (2026). A lightweight Python package for 3D visualization of Earth science data (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18827302
+* Chang Liao. (2026). A lightweight Python package for 3D visualization of Earth science data (v0.1.3). Zenodo. https://doi.org/10.5281/zenodo.18827302

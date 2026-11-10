@@ -153,12 +153,12 @@ def add_mesh_to_plotter(
                 actual_unique_values = np.unique(
                     actual_unique_values
                 )  # Re-unique after conversion
-                actual_unique_values = [int(v) for v in actual_unique_values]
+                actual_unique_list = [int(v) for v in actual_unique_values]
 
                 # Filter to only include values that are in the provided discrete_labels
                 # and actually present in the data
                 unique_values = sorted(
-                    [v for v in actual_unique_values if v in discrete_labels]
+                    [v for v in actual_unique_list if v in discrete_labels]
                 )
 
                 if len(unique_values) == 0:
@@ -210,10 +210,12 @@ def add_mesh_to_plotter(
                     ):
                         matplotlib.colormaps.register(cmap, name=cmap_name, force=True)
                     elif hasattr(plt.cm, "register_cmap"):
-                        try:
-                            plt.cm.unregister_cmap(cmap_name)
-                        except Exception:
-                            pass
+                        unregister = getattr(plt.cm, "unregister_cmap", None)
+                        if callable(unregister):
+                            try:
+                                unregister(cmap_name)
+                            except Exception:
+                                pass
                         plt.cm.register_cmap(cmap=cmap, name=cmap_name)
                 except Exception as register_err:
                     logger.debug(f"Colormap registration note: {register_err}")

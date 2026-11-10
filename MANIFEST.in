@@ -16,5 +16,6 @@ global-exclude *.swp
 global-exclude *.swo
 
 # Exclude test files
+prune test
 prune tests
 prune docs/_build

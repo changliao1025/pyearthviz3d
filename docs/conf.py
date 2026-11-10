@@ -59,7 +59,7 @@ def get_version() -> str:
                 return match.group(1)
     except Exception:
         pass
-    return "0.1.3"
+    return "0.1.4"
 
 
 # -- Project information -----------------------------------------------------

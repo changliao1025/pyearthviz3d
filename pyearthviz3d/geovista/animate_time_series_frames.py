@@ -67,6 +67,16 @@ def animate_time_series_frames(
         # Initialize movie recording
         pPlotter.open_movie(sFilename_out, framerate=30)
 
+        # Apply zoom factor once before frame loop to avoid cumulative zooming
+        if dZoom_factor != 1.0:
+            pPlotter.camera.zoom(dZoom_factor)
+
+        # Ensure axes are visible
+        try:
+            pPlotter.add_axes(viewport=(0.0, 0.0, 0.15, 0.15))
+        except Exception:
+            pass
+
         if iFlag_verbose_in:
             logger.info("Generating animation frames...")
 
@@ -109,16 +119,6 @@ def animate_time_series_frames(
             pPlotter.camera.focal_point = aFocal_point
             pPlotter.camera.position = aCamera_position
             pPlotter.camera.up = [0, 0, 1]  # Maintain Z-up orientation
-
-            # Apply zoom factor for consistent view
-            pPlotter.camera.zoom(dZoom_factor)
-
-            # Ensure axes remain visible throughout animation
-            try:
-                # Use smaller viewport to avoid large axis labels
-                pPlotter.add_axes(viewport=(0.0, 0.0, 0.15, 0.15))
-            except Exception:
-                pass  # Axes may already exist
 
             # Render the current frame
             pPlotter.render()

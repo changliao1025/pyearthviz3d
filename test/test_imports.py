@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
-def test_import(import_statement, description):
+def _run_import(import_statement, description):
     """Test a single import and report results."""
     print(f"\n{'='*60}")
     print(f"Testing: {description}")
@@ -37,37 +37,37 @@ def main():
     results = []
 
     # Test 1: Import the main package
-    results.append(test_import("import pyearthviz3d", "Main package import"))
+    results.append(_run_import("import pyearthviz3d", "Main package import"))
 
     # Test 2: Import geovista submodule
     results.append(
-        test_import("import pyearthviz3d.geovista", "GeoVista submodule import")
+        _run_import("import pyearthviz3d.geovista", "GeoVista submodule import")
     )
 
     # Test 3: Import individual functions from geovista submodule
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista import map_single_frame",
             "map_single_frame function",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista import animate_polyline_file_on_sphere",
             "animate_polyline_file_on_sphere function",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista import animate_rotating_frames",
             "animate_rotating_frames function",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista import animate_time_series_frames",
             "animate_time_series_frames function",
         )
@@ -75,28 +75,28 @@ def main():
 
     # Test 4: Import from top-level package (convenience imports)
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d import map_single_frame",
             "map_single_frame from top-level",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d import animate_polyline_file_on_sphere",
             "animate_polyline_file_on_sphere from top-level",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d import animate_rotating_frames",
             "animate_rotating_frames from top-level",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d import animate_time_series_frames",
             "animate_time_series_frames from top-level",
         )
@@ -104,28 +104,28 @@ def main():
 
     # Test 5: Import directly from module file
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista.animate_time_series_frames import animate_time_series_frames",
             "animate_time_series_frames directly from module file",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista.map_single_frame import map_single_frame",
             "map_single_frame directly from module file",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista.animate_rotating_frames import animate_rotating_frames",
             "animate_rotating_frames directly from module file",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista.animate_polyline_file_on_sphere import animate_polyline_file_on_sphere",
             "animate_polyline_file_on_sphere directly from module file",
         )
@@ -133,14 +133,14 @@ def main():
 
     # Test 6: Check __all__ exports
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d import __all__; assert 'animate_time_series_frames' in __all__",
             "Verify animate_time_series_frames in __all__",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista import __all__; assert 'animate_time_series_frames' in __all__",
             "Verify animate_time_series_frames in geovista.__all__",
         )
@@ -148,21 +148,21 @@ def main():
 
     # Test 7: Verify newly synchronized top-level exports
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d import animate_mesh_with_vector_files, VectorLayerConfig, AnimationResult",
             "animate_mesh_with_vector_files, VectorLayerConfig, AnimationResult from top-level",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "from pyearthviz3d.geovista import animate_mesh_with_vector_files, VectorLayerConfig, AnimationResult",
             "animate_mesh_with_vector_files, VectorLayerConfig, AnimationResult from geovista",
         )
     )
 
     results.append(
-        test_import(
+        _run_import(
             "import pyearthviz3d; import pyearthviz3d.geovista; assert pyearthviz3d.__all__ == pyearthviz3d.geovista.__all__",
             "Verify __all__ consistency between top-level and geovista",
         )
@@ -182,6 +182,11 @@ def main():
     else:
         print(f"\n✗ {total - passed} import(s) failed. Please review the errors above.")
         return 1
+
+
+def test_all_imports():
+    """Pytest entrypoint to verify all imports succeed."""
+    assert main() == 0
 
 
 if __name__ == "__main__":

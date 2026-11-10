@@ -45,6 +45,11 @@ def animate_rotating_frames(
     retry_on_failure: bool = True,
     progress_callback: Optional[Callable[[int, int, float], None]] = None,
     return_detailed_result: bool = False,
+    style: Optional[str] = "surface",
+    color: Optional[str] = None,
+    edge_color: str = "black",
+    line_width: float = 1.0,
+    **kwargs,
 ) -> Union[bool, AnimationResult]:
     """
     Create enhanced rotating animation of the 3D globe visualization.
@@ -190,6 +195,11 @@ def animate_rotating_frames(
         if pConfig.verbose:
             logger.info("📐 Adding mesh data to animation plotter...")
 
+        mesh_color = (
+            color
+            if color is not None
+            else (edge_color if (style == "wireframe") else "white")
+        )
         mesh_success = add_mesh_to_plotter(
             plotter=plotter,
             mesh=pMesh,
@@ -199,6 +209,10 @@ def animate_rotating_frames(
             colormap=pConfig.colormap,
             unit=sUnit or "",
             validate_data=validate_inputs,
+            style=style or "surface",
+            color=mesh_color,
+            edge_color=edge_color,
+            line_width=line_width,
         )
 
         if not mesh_success:

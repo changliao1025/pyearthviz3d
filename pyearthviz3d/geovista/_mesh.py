@@ -80,6 +80,7 @@ def add_mesh_to_plotter(
     show_edges: bool = False,
     edge_color: str = "black",
     validate_data: bool = True,
+    line_width: float = 1.0,
 ) -> bool:
     """
     Add mesh to plotter with comprehensive validation and error handling.
@@ -279,19 +280,24 @@ def add_mesh_to_plotter(
                     opacity=opacity,
                     show_edges=show_edges,
                     edge_color=edge_color,
+                    line_width=line_width,
                 )
 
             if scalar_info["has_nan"]:
                 logger.warning(f"Scalar field '{scalar_name}' contains NaN values")
         else:
             # Add mesh without scalars
+            effective_color = (
+                edge_color if (style == "wireframe" and color == "white") else color
+            )
             plotter.add_mesh(
                 mesh_valid,
                 style=style,
-                color=color,
+                color=effective_color,
                 opacity=opacity,
                 show_edges=show_edges,
                 edge_color=edge_color,
+                line_width=line_width,
             )
 
         return True

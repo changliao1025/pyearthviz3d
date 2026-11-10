@@ -72,6 +72,9 @@ def map_single_frame(
     return_detailed_result: bool = False,
     show_edges: bool = False,
     edge_color: str = "black",
+    color: Optional[str] = None,
+    line_width: float = 1.0,
+    **kwargs,
 ) -> Union[bool, SingleFrameResult]:
     """
     Enhanced single frame visualization with comprehensive error handling and validation.
@@ -254,6 +257,11 @@ def map_single_frame(
                     f"Using reduced mesh opacity {effective_mesh_opacity} because base layer is present"
                 )
 
+        mesh_color = (
+            color
+            if color is not None
+            else (edge_color if (style == "wireframe") else "white")
+        )
         mesh_success = add_mesh_to_plotter(
             plotter=plotter,
             mesh=pMesh,
@@ -267,6 +275,8 @@ def map_single_frame(
             opacity=effective_mesh_opacity,
             show_edges=show_edges,
             edge_color=edge_color,
+            color=mesh_color,
+            line_width=line_width,
         )
 
         if not mesh_success:

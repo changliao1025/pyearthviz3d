@@ -1,10 +1,15 @@
 ### PyEarthViz3D
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18827302.svg)](https://doi.org/10.5281/zenodo.18827302)
-[![geovista](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/bjlittle/geovista/main/docs/assets/badge/v0.json)](https://geovista.readthedocs.io/)
 [![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
+[![PyPI version](https://badge.fury.io/py/pyearthviz3d.svg)](https://badge.fury.io/py/pyearthviz3d)
 [![PyPI Downloads](https://static.pepy.tech/badge/pyearthviz3d)](https://pepy.tech/project/pyearthviz3d)
+
+[![Conda Version](https://img.shields.io/conda/v/conda-forge/pyearthviz3d.svg)](https://anaconda.org/conda-forge/pyearthviz3d)
 [![Conda Downloads](https://anaconda.org/conda-forge/pyearthviz3d/badges/downloads.svg)](https://anaconda.org/conda-forge/pyearthviz3d)
+
+[![geovista](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/bjlittle/geovista/main/docs/assets/badge/v0.json)](https://geovista.readthedocs.io/)
 
 A lightweight Python package for 3D visualization of Earth science data.
 

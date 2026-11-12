@@ -87,7 +87,7 @@ python -m build
 conda install numpy gdal geovista pyvista
 
 # Install pyearth (required dependency)
-pip install pyearth>=0.2.3
+pip install pyearth>=0.2.5
 
 # Build and install
 pip install -e .

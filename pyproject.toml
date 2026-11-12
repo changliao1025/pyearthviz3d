@@ -28,19 +28,20 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: GIS",
     "Topic :: Scientific/Engineering :: Visualization",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.15"
 dependencies = [
     "numpy",
     "geovista",
     "pyvista",
     "gdal>=3.0.0",
-    "pyearth>=0.2.3",
+    "pyearth>=0.2.5",
     "imageio",
 ]
 
@@ -79,7 +80,7 @@ pyearthviz3d = ["py.typed"]
 
 [tool.black]
 line-length = 100
-target-version = ['py310', 'py311', 'py312']
+target-version = ['py311']
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
@@ -89,7 +90,7 @@ python_functions = "test_*"
 addopts = "-v"
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 ignore_missing_imports = true
 warn_return_any = true
 warn_unused_configs = true

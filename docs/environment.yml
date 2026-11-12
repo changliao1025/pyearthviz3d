@@ -3,12 +3,12 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.10
+  - python>=3.11,<3.15
   - numpy
   - gdal>=3.0
   - pyvista
   - geovista
-  - pyearth>=0.2.4
+  - pyearth>=0.2.5
   - sphinx>=5.0.0
   - sphinx_rtd_theme>=1.0.0
   - myst-parser>=0.18.0
